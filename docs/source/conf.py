@@ -19,7 +19,7 @@ sys.path.insert(0, os.path.abspath('../..'))  # Project root directory (where py
 project = 'PyTupli'
 copyright = '2025, TUM CPS'
 author = 'Hannah Markgraf, Michael Eichelbeck'
-release = '0.3.4'
+release = '1.0.0'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
