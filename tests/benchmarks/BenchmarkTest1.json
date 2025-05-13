@@ -1,0 +1,164 @@
+{
+    "py/object": "commonpower.benchmark.benchmark.Benchmark",
+    "py/state": {
+        "commonpower_version": "0.3.1",
+        "scenario": null,
+        "scenario_hash": "scenario1",
+        "benchmark_hash": "bench_1",
+        "benchmark_name": "BenchmarkTest1",
+        "n_steps": 24,
+        "fixed_start": null,
+        "deployment_runner_setting": {
+            "forecast_horizon": {
+                "py/object": "datetime.timedelta",
+                "days": 0,
+                "seconds": 21600,
+                "microseconds": 0
+            },
+            "control_horizon": {
+                "py/object": "datetime.timedelta",
+                "days": 3,
+                "seconds": 0,
+                "microseconds": 0
+            }
+        },
+        "controller_dict": {
+            "MultiFamilyHouse": {
+                "type": "RLControllerSB3",
+                "name": "agent1",
+                "safety_layer": {
+                    "py/object": "commonpower.control.safety_layer.safety_layers.ActionProjectionSafetyLayer",
+                    "nodes": null,
+                    "top_level_nodes": null,
+                    "obj_fcn": null,
+                    "unsafe_action": null,
+                    "penalty": {
+                        "py/object": "commonpower.control.safety_layer.penalties.DistanceDependingPenalty",
+                        "penalty_factor": 1.0
+                    },
+                    "solver": {
+                        "py/object": "pyomo.solvers.plugins.solvers.gurobi_direct.GurobiDirect",
+                        "type": "gurobi_direct",
+                        "name": "gurobi_direct",
+                        "_doc": "gurobi_direct OptSolver",
+                        "options": {
+                            "py/object": "pyomo.common.collections.bunch.Bunch",
+                            "MIPFocus": 1,
+                            "IntFeasTol": 1e-09,
+                            "TimeLimit": 60,
+                            "__dict__": {
+                                "_name_": "Bunch"
+                            }
+                        },
+                        "_smap_id": null,
+                        "_load_solutions": true,
+                        "_select_index": 0,
+                        "_report_timing": false,
+                        "_suffixes": [],
+                        "_log_file": null,
+                        "_soln_file": null,
+                        "_default_variable_value": null,
+                        "_assert_available": false,
+                        "_problem_format": null,
+                        "_valid_problem_formats": [],
+                        "_results_format": null,
+                        "_valid_result_formats": {},
+                        "_results_reader": null,
+                        "_problem": null,
+                        "_problem_files": null,
+                        "_metasolver": false,
+                        "_allow_callbacks": false,
+                        "_callback": null,
+                        "_capabilities": {
+                            "py/object": "pyomo.common.collections.bunch.Bunch",
+                            "linear": true,
+                            "quadratic_objective": true,
+                            "quadratic_constraint": true,
+                            "integer": true,
+                            "sos1": true,
+                            "sos2": true,
+                            "__dict__": {
+                                "_name_": "Bunch"
+                            }
+                        },
+                        "_pyomo_model": null,
+                        "_solver_model": null,
+                        "_symbol_map": {
+                            "py/object": "pyomo.core.expr.symbol_map.SymbolMap",
+                            "py/state": {
+                                "py/tuple": [
+                                    {},
+                                    {},
+                                    null
+                                ]
+                            }
+                        },
+                        "_labeler": null,
+                        "_pyomo_var_to_solver_var_map": {
+                            "py/object": "pyomo.common.collections.component_map.ComponentMap",
+                            "py/state": [
+                                {}
+                            ]
+                        },
+                        "_solver_var_to_pyomo_var_map": {
+                            "py/object": "pyomo.common.collections.component_map.ComponentMap",
+                            "py/state": [
+                                {}
+                            ]
+                        },
+                        "_pyomo_con_to_solver_con_map": {},
+                        "_solver_con_to_pyomo_con_map": {
+                            "py/object": "pyomo.common.collections.component_map.ComponentMap",
+                            "py/state": [
+                                {}
+                            ]
+                        },
+                        "_vars_referenced_by_con": {
+                            "py/object": "pyomo.common.collections.component_map.ComponentMap",
+                            "py/state": [
+                                {}
+                            ]
+                        },
+                        "_vars_referenced_by_obj": {
+                            "py/object": "pyomo.common.collections.component_set.ComponentSet",
+                            "py/state": [
+                                {}
+                            ]
+                        },
+                        "_objective": null,
+                        "results": null,
+                        "_skip_trivial_constraints": false,
+                        "_output_fixed_variable_bounds": false,
+                        "_python_api_exists": true,
+                        "_symbolic_solver_labels": false,
+                        "_referenced_variables": {
+                            "py/object": "pyomo.common.collections.component_map.ComponentMap",
+                            "py/state": [
+                                {}
+                            ]
+                        },
+                        "_keepfiles": false,
+                        "_save_results": true,
+                        "_needs_updated": true,
+                        "_callback_func": null,
+                        "_range_constraints": {
+                            "py/set": []
+                        },
+                        "_max_obj_degree": 2,
+                        "_max_constraint_degree": 2,
+                        "_manage_env": true,
+                        "_env": null,
+                        "_env_options": null
+                    }
+                }
+            }
+        },
+        "metadata": {
+            "difficulty": "easy",
+            "version": "1.0"
+        },
+        "system_node": null,
+        "deployment_runner": null,
+        "trainer": null
+    }
+}
