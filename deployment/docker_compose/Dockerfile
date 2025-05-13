@@ -5,14 +5,13 @@ FROM python:3.13-slim
 WORKDIR /app
 
 # Install Poetry
-RUN pip install poetry
+RUN pip install poetry==2.1.2
 
 # Configure Poetry to not create a virtual environment inside the Docker container
 RUN poetry config virtualenvs.create false
 
 # Copy the startup script into the container
-COPY ./start_server.sh /app/start.sh
-#RUN chmod +x /app/start.sh
+COPY ./deployment/docker_compose/start_server.sh /app/start.sh
 
 # Ensure the script has Unix line endings and executable permissions
 RUN apt-get update && apt-get install -y dos2unix && \
@@ -23,7 +22,7 @@ RUN apt-get update && apt-get install -y dos2unix && \
     rm -rf /var/lib/apt/lists/*
 
 # Copy Poetry configuration files
-COPY ./pyproject.toml ./poetry.lock* /app/
+COPY ./pyproject.toml ./poetry.lock* ./README.md /app/
 
 # Copy roles.py script over to initialize the database
 COPY ./pytupli/server/management/roles.py /app/roles.py

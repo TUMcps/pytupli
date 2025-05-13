@@ -3,7 +3,6 @@ name: pytupli-stack
 services:
   mongo:
     image: mongo:8.0
-    container_name: mongo_db
     ports:
       - "27017:27017"
     env_file:
@@ -17,7 +16,6 @@ services:
     build:
       context: ../..
       dockerfile: deployment/docker_compose/Dockerfile
-    container_name: pytupli_api_server
     image: pytupli_api_server:latest
     depends_on:
       mongo:
