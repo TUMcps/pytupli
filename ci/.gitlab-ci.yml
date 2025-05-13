@@ -1,0 +1,126 @@
+image: ${CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX}/python:3.13
+
+stages:
+  - static-check
+  - install
+  - test
+  - versioning
+  - release
+  - deploy
+
+# Add workflow rules to prevent duplicate pipeline runs
+workflow:
+  rules:
+    # Skip pipeline for the specific "Bump version" commit pushed to a branch
+    - if: $CI_COMMIT_MESSAGE =~ /^Bump version to \d+\.\d+\.\d+/ && $CI_COMMIT_BRANCH
+      when: never
+    # Skip branch pipelines if a merge request pipeline is running for the same commit
+    - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS
+      when: never
+    # Run for all other cases (including tag pipelines for the "Bump version" commit)
+    - when: always
+
+# Global git configuration for all stages
+before_script:
+  - git config --global url."https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.lrz.de/".insteadOf "git@gitlab.lrz.de:"
+  - git config --global --add url."https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.lrz.de/".insteadOf "ssh://git@gitlab.lrz.de/"
+  - git config --global user.name 'TUM CPS'
+  - git config --global user.email '<>'
+
+# Static check stage needs ruff installed
+ruff:
+  stage: static-check
+  before_script:
+    - pip install ruff
+  script:
+    - ruff check --output-format=gitlab ./pytupli
+  allow_failure: false
+
+# Install poetry and create the virtual environment
+poetry_install:
+  stage: install
+  before_script:
+    - pip install poetry==2.1.2
+    - poetry config virtualenvs.in-project true
+  script:
+    - poetry install --with server,tests
+  artifacts:
+    paths:
+      - .venv
+
+# Subsequent stages can directly use the virtual environment
+tests:
+  stage: test
+  before_script:
+    - source .venv/bin/activate
+    - cp pytupli/server/env.template pytupli/server/.env
+    - pip install keyrings.alt
+  services:
+    - name: ${CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX}/mongo:8.0
+      alias: mongo
+  variables:
+    MONGO_CONNECTION_STRING: "mongodb://mongo:27017/"
+  script:
+    - pytest tests --cov=pytupli --cov-report=term --cov-report=xml:coverage.xml
+  needs:
+    - job: poetry_install
+      artifacts: true
+  coverage: '/TOTAL\s+\d+\s+\d+\s+(\d+\.?\d*)%/'
+  artifacts:
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage.xml
+    paths:
+      - coverage.xml
+
+auto_version:
+  stage: versioning
+  script:
+    - apt-get update && apt-get install -y jq
+    - pip install semver
+    # Run the version manager script which saves commit message for release description
+    - python ci/version_manager.py
+    - source version.env
+    # Create tag and push changes with original commit message preserved in tag message
+    - git add pyproject.toml docs/source/conf.py
+    - git commit -m "Bump version to $NEW_VERSION"
+    - git tag -a "v$NEW_VERSION" -m "$RELEASE_DESCRIPTION"
+    - git push https://oauth2:${REPO_WRITE_TOKEN}@gitlab.lrz.de/${CI_PROJECT_PATH}.git HEAD:${CI_COMMIT_REF_NAME} --tags
+    - echo "Created version $NEW_VERSION with description $RELEASE_DESCRIPTION"
+  artifacts:
+    paths:
+      - pyproject.toml
+      - docs/source/conf.py
+      - version.env
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: never
+    - if: $CI_COMMIT_BRANCH == "main"
+
+release:
+  stage: release
+  image: registry.gitlab.com/gitlab-org/release-cli:latest
+  script:
+    - echo "Creating release for tag $CI_COMMIT_TAG"
+    # Extract release description from the tag's message into a file
+    - git tag -l --format='%(contents)' $CI_COMMIT_TAG > release_notes.txt || echo "Release version $CI_COMMIT_TAG" > release_notes.txt
+    # Ensure file is not empty if git tag command failed silently or description was empty
+    - if [ ! -s release_notes.txt ]; then echo "Release version $CI_COMMIT_TAG" > release_notes.txt; fi
+    - echo "Using release description from release_notes.txt:"
+    - cat release_notes.txt
+  release:
+    tag_name: '$CI_COMMIT_TAG'
+    description: './release_notes.txt' # Reference the file containing the description
+  rules:
+    - if: $CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+/
+
+upload_to_pypi:
+  stage: deploy
+  script:
+    - pip install build twine
+    - python -m build
+    - echo "Uploading package to PyPI..."
+    - python -m twine upload --username __token__ --password ${PYPI_TOKEN} dist/*
+  rules:
+    - if: $CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+/

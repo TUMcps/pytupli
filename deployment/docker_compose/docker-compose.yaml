@@ -1,0 +1,33 @@
+name: pytupli-stack
+
+services:
+  mongo:
+    image: mongo:8.0
+    container_name: mongo_db
+    ports:
+      - "27017:27017"
+    env_file:
+      - .env.mongo
+    volumes:
+      - mongo_data:/data/db  # Mount a volume for persistence
+    profiles:
+      - with_mongo
+
+  api_server:
+    build:
+      context: ../..
+      dockerfile: deployment/docker_compose/Dockerfile
+    container_name: pytupli_api_server
+    image: pytupli_api_server:latest
+    depends_on:
+      mongo:
+        condition: service_started
+        required: false
+    ports:
+      - "${PORT:-8080}:${PORT:-8080}"
+    env_file:
+      - .env
+
+volumes:
+  mongo_data:
+    driver: local

@@ -1,0 +1,481 @@
+{
+    "py/object": "commonpower.benchmark.benchmark.Scenario",
+    "py/state": {
+        "commonpower_version": "0.3.1",
+        "scenario_name": "scenario_BenchmarkTest",
+        "scenario_hash": "b0ff7a7b1e1252021dbb8aafed6d24344a61478baec96bd2a831d5ea6360239f_v0_3_1",
+        "system_node": {
+            "py/object": "commonpower.core.System",
+            "model": null,
+            "instance": null,
+            "controller": null,
+            "name": "System",
+            "id": "",
+            "model_elements": [],
+            "data_providers": [],
+            "data_provider_map": {},
+            "config": {},
+            "nodes": [
+                {
+                    "py/object": "commonpower.models.buses.RTPricedBus",
+                    "model": null,
+                    "instance": null,
+                    "controller": null,
+                    "name": "MultiFamilyHouse",
+                    "id": "",
+                    "model_elements": [],
+                    "data_providers": [
+                        {
+                            "py/object": "commonpower.data_forecasting.base.DataProvider",
+                            "data": {
+                                "py/object": "commonpower.data_forecasting.data_sources.ConstantDataSource",
+                                "frequency": {
+                                    "py/object": "datetime.timedelta",
+                                    "days": 0,
+                                    "seconds": 3600,
+                                    "microseconds": 0
+                                },
+                                "values_dict": {
+                                    "psib": 0.37
+                                },
+                                "date_range": [
+                                    {
+                                        "py/object": "datetime.datetime",
+                                        "__reduce__": [
+                                            {
+                                                "py/type": "datetime.datetime"
+                                            },
+                                            [
+                                                "B+ABAQAAAAAAAA=="
+                                            ]
+                                        ]
+                                    },
+                                    {
+                                        "py/object": "datetime.datetime",
+                                        "__reduce__": [
+                                            {
+                                                "py/type": "datetime.datetime"
+                                            },
+                                            [
+                                                "B+AMHxcAAAAAAA=="
+                                            ]
+                                        ]
+                                    }
+                                ]
+                            },
+                            "forecaster": {
+                                "py/object": "commonpower.data_forecasting.forecasters.PersistenceForecaster",
+                                "frequency": {
+                                    "py/id": 13
+                                },
+                                "horizon": {
+                                    "py/object": "datetime.timedelta",
+                                    "days": 0,
+                                    "seconds": 21600,
+                                    "microseconds": 0
+                                },
+                                "look_back": {
+                                    "py/object": "datetime.timedelta",
+                                    "days": 1,
+                                    "seconds": 0,
+                                    "microseconds": 0
+                                }
+                            },
+                            "horizon": {
+                                "py/id": 19
+                            },
+                            "frequency": {
+                                "py/id": 13
+                            },
+                            "observable_features": [
+                                "psib"
+                            ],
+                            "last_provided_data": {},
+                            "perfect_knowledge_override": false
+                        },
+                        {
+                            "py/object": "commonpower.data_forecasting.base.DataProvider",
+                            "data": {
+                                "py/object": "commonpower.data_forecasting.data_sources.ConstantDataSource",
+                                "frequency": {
+                                    "py/id": 13
+                                },
+                                "values_dict": {
+                                    "psis": 0.08
+                                },
+                                "date_range": {
+                                    "py/id": 15
+                                }
+                            },
+                            "forecaster": {
+                                "py/id": 18
+                            },
+                            "horizon": {
+                                "py/id": 19
+                            },
+                            "frequency": {
+                                "py/id": 13
+                            },
+                            "observable_features": [
+                                "psis"
+                            ],
+                            "last_provided_data": {},
+                            "perfect_knowledge_override": false
+                        }
+                    ],
+                    "data_provider_map": {},
+                    "config": {
+                        "p": {
+                            "py/tuple": [
+                                -50,
+                                50
+                            ]
+                        },
+                        "q": {
+                            "py/tuple": [
+                                -50,
+                                50
+                            ]
+                        },
+                        "v": {
+                            "py/tuple": [
+                                0.95,
+                                1.05
+                            ]
+                        },
+                        "d": {
+                            "py/tuple": [
+                                -15,
+                                15
+                            ]
+                        }
+                    },
+                    "is_valid": false,
+                    "t": null,
+                    "tau": null,
+                    "horizon": null,
+                    "robust_constraint_builder": null,
+                    "nodes": [
+                        {
+                            "py/object": "commonpower.models.components.Load",
+                            "model": null,
+                            "instance": null,
+                            "controller": null,
+                            "name": "Load1",
+                            "id": "",
+                            "model_elements": [],
+                            "data_providers": [
+                                {
+                                    "py/object": "commonpower.data_forecasting.base.DataProvider",
+                                    "data": {
+                                        "py/object": "commonpower.data_forecasting.data_sources.CSVDataSource",
+                                        "frequency": {
+                                            "py/id": 13
+                                        },
+                                        "data": null,
+                                        "datetime_format": "%Y-%m-%d %H:%M:00",
+                                        "hash": "2614331bd250c4ca8ecd665feee0fac4950af2d573b5d2c1ac6abd58d4d14833"
+                                    },
+                                    "forecaster": {
+                                        "py/id": 18
+                                    },
+                                    "horizon": {
+                                        "py/id": 19
+                                    },
+                                    "frequency": {
+                                        "py/id": 13
+                                    },
+                                    "observable_features": {
+                                        "py/reduce": [
+                                            {
+                                                "py/function": "numpy.core.multiarray._reconstruct"
+                                            },
+                                            {
+                                                "py/tuple": [
+                                                    {
+                                                        "py/type": "numpy.ndarray"
+                                                    },
+                                                    {
+                                                        "py/tuple": [
+                                                            0
+                                                        ]
+                                                    },
+                                                    {
+                                                        "py/b64": "Yg=="
+                                                    }
+                                                ]
+                                            },
+                                            {
+                                                "py/tuple": [
+                                                    1,
+                                                    {
+                                                        "py/tuple": [
+                                                            1
+                                                        ]
+                                                    },
+                                                    {
+                                                        "py/reduce": [
+                                                            {
+                                                                "py/type": "numpy.dtype"
+                                                            },
+                                                            {
+                                                                "py/tuple": [
+                                                                    "O8",
+                                                                    false,
+                                                                    true
+                                                                ]
+                                                            },
+                                                            {
+                                                                "py/tuple": [
+                                                                    3,
+                                                                    "|",
+                                                                    null,
+                                                                    null,
+                                                                    null,
+                                                                    -1,
+                                                                    -1,
+                                                                    63
+                                                                ]
+                                                            }
+                                                        ]
+                                                    },
+                                                    false,
+                                                    [
+                                                        "p"
+                                                    ]
+                                                ]
+                                            }
+                                        ]
+                                    },
+                                    "last_provided_data": {},
+                                    "perfect_knowledge_override": false
+                                },
+                                {
+                                    "py/object": "commonpower.data_forecasting.base.DataProvider",
+                                    "data": {
+                                        "py/object": "commonpower.data_forecasting.data_sources.ConstantDataSource",
+                                        "frequency": {
+                                            "py/id": 13
+                                        },
+                                        "values_dict": {
+                                            "q": 0.0
+                                        },
+                                        "date_range": [
+                                            {
+                                                "py/object": "datetime.datetime",
+                                                "__reduce__": [
+                                                    {
+                                                        "py/type": "datetime.datetime"
+                                                    },
+                                                    [
+                                                        "B+ABAQAAAAAAAA=="
+                                                    ]
+                                                ]
+                                            },
+                                            {
+                                                "py/object": "datetime.datetime",
+                                                "__reduce__": [
+                                                    {
+                                                        "py/type": "datetime.datetime"
+                                                    },
+                                                    [
+                                                        "B+AMHxcAAAAAAA=="
+                                                    ]
+                                                ]
+                                            }
+                                        ]
+                                    },
+                                    "forecaster": {
+                                        "py/id": 18
+                                    },
+                                    "horizon": {
+                                        "py/id": 19
+                                    },
+                                    "frequency": {
+                                        "py/id": 13
+                                    },
+                                    "observable_features": [
+                                        "q"
+                                    ],
+                                    "last_provided_data": {},
+                                    "perfect_knowledge_override": false
+                                }
+                            ],
+                            "data_provider_map": {},
+                            "config": {},
+                            "is_valid": false,
+                            "t": null,
+                            "tau": null,
+                            "horizon": null,
+                            "robust_constraint_builder": null,
+                            "nodes": []
+                        },
+                        {
+                            "py/object": "commonpower.models.components.RenewableGen",
+                            "model": null,
+                            "instance": null,
+                            "controller": null,
+                            "name": "PV1",
+                            "id": "",
+                            "model_elements": [],
+                            "data_providers": [
+                                {
+                                    "py/object": "commonpower.data_forecasting.base.DataProvider",
+                                    "data": {
+                                        "py/object": "commonpower.data_forecasting.data_sources.CSVDataSource",
+                                        "frequency": {
+                                            "py/id": 13
+                                        },
+                                        "data": null,
+                                        "datetime_format": "%Y-%m-%d %H:%M:00",
+                                        "hash": "f910e9d2b5cf2a8633d0e2636c4cc378175cc71ef975ab917efc0a4518713653"
+                                    },
+                                    "forecaster": {
+                                        "py/id": 18
+                                    },
+                                    "horizon": {
+                                        "py/id": 19
+                                    },
+                                    "frequency": {
+                                        "py/id": 13
+                                    },
+                                    "observable_features": {
+                                        "py/reduce": [
+                                            {
+                                                "py/function": "numpy.core.multiarray._reconstruct"
+                                            },
+                                            {
+                                                "py/tuple": [
+                                                    {
+                                                        "py/type": "numpy.ndarray"
+                                                    },
+                                                    {
+                                                        "py/tuple": [
+                                                            0
+                                                        ]
+                                                    },
+                                                    {
+                                                        "py/b64": "Yg=="
+                                                    }
+                                                ]
+                                            },
+                                            {
+                                                "py/tuple": [
+                                                    1,
+                                                    {
+                                                        "py/tuple": [
+                                                            1
+                                                        ]
+                                                    },
+                                                    {
+                                                        "py/id": 37
+                                                    },
+                                                    false,
+                                                    [
+                                                        "p"
+                                                    ]
+                                                ]
+                                            }
+                                        ]
+                                    },
+                                    "last_provided_data": {},
+                                    "perfect_knowledge_override": false
+                                }
+                            ],
+                            "data_provider_map": {},
+                            "config": {
+                                "py/id": 49
+                            },
+                            "is_valid": false,
+                            "t": null,
+                            "tau": null,
+                            "horizon": null,
+                            "robust_constraint_builder": null,
+                            "nodes": []
+                        },
+                        {
+                            "py/object": "commonpower.models.components.ESSLinear",
+                            "model": null,
+                            "instance": null,
+                            "controller": null,
+                            "name": "ESS1",
+                            "id": "",
+                            "model_elements": [],
+                            "data_providers": [],
+                            "data_provider_map": {},
+                            "config": {
+                                "p": {
+                                    "py/tuple": [
+                                        -1.5,
+                                        1.5
+                                    ]
+                                },
+                                "q": {
+                                    "py/tuple": [
+                                        0,
+                                        0
+                                    ]
+                                },
+                                "soc": {
+                                    "py/tuple": [
+                                        0.5,
+                                        4.5
+                                    ]
+                                },
+                                "soc_init": {
+                                    "py/object": "commonpower.modeling.param_initialization.RangeInitializer",
+                                    "lb": 1.0,
+                                    "ub": 4.0,
+                                    "sampling_mode": "uniform"
+                                }
+                            },
+                            "is_valid": false,
+                            "t": null,
+                            "tau": null,
+                            "horizon": null,
+                            "robust_constraint_builder": null,
+                            "nodes": []
+                        }
+                    ],
+                    "stand_alone": true
+                },
+                {
+                    "py/object": "commonpower.models.buses.ExternalGrid",
+                    "model": null,
+                    "instance": null,
+                    "controller": null,
+                    "name": "ExternalGrid",
+                    "id": "",
+                    "model_elements": [],
+                    "data_providers": [],
+                    "data_provider_map": {},
+                    "config": {},
+                    "is_valid": false,
+                    "t": null,
+                    "tau": null,
+                    "horizon": null,
+                    "robust_constraint_builder": null,
+                    "nodes": [],
+                    "stand_alone": true
+                }
+            ],
+            "lines": [],
+            "controllers": {},
+            "t": null,
+            "tau": null,
+            "forecast_horizon": null,
+            "forecast_horizon_int": null,
+            "control_horizon": null,
+            "start_time": null,
+            "continuous_control": null,
+            "date_range": null,
+            "power_flow_model": {
+                "py/object": "commonpower.models.powerflow.PowerBalanceModel"
+            },
+            "env_func": null,
+            "solver": null,
+            "_cost_builder": null
+        },
+        "global_seed": null
+    }
+}
