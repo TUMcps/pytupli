@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="pytupli_logo.svg" alt="PyTupli Logo">
+  <img src="docs/source/pytupli_logo.svg" alt="PyTupli Logo">
 </div>
 
 # PyTupli

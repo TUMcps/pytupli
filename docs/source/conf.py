@@ -59,6 +59,7 @@ root_doc = 'index'
 
 html_theme = 'sphinx_rtd_theme'
 html_static_path = ['static']
+html_logo = "pytupli_logo.svg"
 html_theme_options = {
     'collapse_navigation': False,
     'navigation_depth': -1,  # Show all levels of navigation
