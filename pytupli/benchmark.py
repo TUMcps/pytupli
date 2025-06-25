@@ -34,6 +34,7 @@ class TupliEnvWrapper(Wrapper):
         benchmark_id (str | None): Identifier for the benchmark. Defaults to None
         metadata_callback (EpisodeMetadataCallback | None): Callback for generating
         episode metadata. Defaults to None
+        rl_tuple_cls (type[RLTuple]): Class to use for creating RL tuples. Defaults to RLTuple
     """
 
     def __init__(
@@ -42,6 +43,7 @@ class TupliEnvWrapper(Wrapper):
         storage: TupliStorage,
         benchmark_id: str | None = None,
         metadata_callback: EpisodeMetadataCallback | None = None,
+        rl_tuple_cls: type[RLTuple] = RLTuple,
     ):
         super().__init__(env)
         self.storage = storage
@@ -49,6 +51,7 @@ class TupliEnvWrapper(Wrapper):
         self._record_episodes = True  # whether to record tuples or not
         self.metadata_callback = metadata_callback
         self.id = benchmark_id  # Benchmark ID once stored
+        self.rl_tuple_cls = rl_tuple_cls
 
     def activate_recording(self):
         """Activates the recording of environment interactions.
@@ -170,7 +173,7 @@ class TupliEnvWrapper(Wrapper):
                 - info: Additional information from the environment
         """
         obs, reward, terminated, truncated, info = self.env.step(action)
-        rl_tuple = RLTuple.from_env_step(obs, action, reward, terminated, truncated, info)
+        rl_tuple = self.rl_tuple_cls.from_env_step(obs, action, reward, terminated, truncated, info)
 
         if self._record_episodes:
             episode_metadata = self.metadata_callback(rl_tuple) if self.metadata_callback else {}
