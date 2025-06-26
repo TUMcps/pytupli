@@ -252,6 +252,7 @@ class TupliEnvWrapper(Wrapper):
         storage: TupliStorage,
         benchmark_id: str | None = None,
         metadata_callback: EpisodeMetadataCallback | None = None,
+        rl_tuple_cls: type[RLTuple] = RLTuple,
     ) -> TupliEnvWrapper:
         """Loads a benchmark from storage.
 
@@ -267,7 +268,7 @@ class TupliEnvWrapper(Wrapper):
         stored_benchmark: Benchmark = storage.load_benchmark(benchmark_id)
         env: Env = cls.deserialize_env(stored_benchmark.serialized, storage)
 
-        return cls(env, storage, benchmark_id, metadata_callback)
+        return cls(env, storage, benchmark_id, metadata_callback, rl_tuple_cls)
 
     def delete(self, delete_artifacts: bool = False, delete_episodes: bool = True):
         """Deletes the benchmark and optionally its related data from storage.
