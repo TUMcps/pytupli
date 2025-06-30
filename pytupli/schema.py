@@ -64,7 +64,7 @@ class Benchmark(BenchmarkHeader):
 class RLTuple(BaseModel):
     state: Any
     action: Any
-    reward: float
+    reward: Any
     info: dict[str, Any] = {}
     terminal: bool = False
     timeout: bool = False
