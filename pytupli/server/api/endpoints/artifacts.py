@@ -3,6 +3,7 @@ import tempfile
 import os
 from typing import Annotated
 
+from fastapi.params import Query
 from gridfs import NoFile
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from fastapi.responses import FileResponse
@@ -99,10 +100,11 @@ async def artifact_publish(
 
 @router.get('/list')
 async def artifact_list(
-    filter: BaseFilter = None,
+    filter: Annotated[BaseFilter, Query()] = BaseFilter(),
     db_handler: MongoDBHandler = Depends(get_db_handler),
     user: User = Depends(check_authentication),
 ) -> list[ArtifactMetadataItem]:
+    filter.apply_prefix('metadata')
     filter = await inject_read_permission_filter(filter, user, db_handler, prefix_path='metadata')
     query_filter = db_handler.convert_filter_to_query(filter) if filter else {}
     try:

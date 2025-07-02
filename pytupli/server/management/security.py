@@ -407,8 +407,6 @@ async def inject_read_permission_filter(
                 type=FilterType.AND,
                 filters=[allowed_filter, filter],
             )
-        else:
-            filter = allowed_filter
     else:
         filter = allowed_filter
 

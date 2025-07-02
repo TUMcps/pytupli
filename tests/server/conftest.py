@@ -303,14 +303,13 @@ async def delete_episode(async_client, episode_id, headers=None):
 
 async def list_episodes(async_client, filter_data=None, include_tuples=False, headers=None):
     """List episodes with optional filtering"""
-    url = f'/episodes/list?include_tuples={str(include_tuples).lower()}'
+    url = '/episodes/list'
 
+    params = {'include_tuples': str(include_tuples).lower()}
     if filter_data:
-        response = await async_client.get(
-            url, headers=headers, params={'filter': filter_data.model_dump_json()}
-        )
-    else:
-        response = await async_client.get(url, headers=headers)
+        params = filter_data.to_params_dict(params)
+
+    response = await async_client.get(url, headers=headers, params=params)
 
     if response.status_code == 200:
         if include_tuples:
