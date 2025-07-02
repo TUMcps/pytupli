@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from typing_extensions import Annotated
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from pytupli.server.api.dependencies import get_db_handler
 from pytupli.schema import BaseFilter, Benchmark, BenchmarkHeader, BenchmarkQuery, User
@@ -72,12 +73,11 @@ async def benchmarks_load(
 
 @router.get('/list')
 async def benchmarks_list(
-    filter: BaseFilter = None,
+    filter: Annotated[BaseFilter, Query()] = BaseFilter(),
     db_handler: MongoDBHandler = Depends(get_db_handler),
     user: User = Depends(check_authentication),
 ) -> list[BenchmarkHeader]:
     filter = await inject_read_permission_filter(filter, user, db_handler)
-
     try:
         benchmarks = await db_handler.query_items(BENCHMARK_COLLECTION_NAME, filter)
         return [BenchmarkHeader(**benchmark) for benchmark in benchmarks]

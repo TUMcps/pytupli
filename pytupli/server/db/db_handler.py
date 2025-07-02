@@ -16,7 +16,7 @@ class MongoDBHandler:
         Convert a filter object or list of filters to MongoDB query format.
         Args:
             filter_obj (BaseFilter): The filter object to convert. This can be a single filter or a composite filter
-                                    containing multiple sub-filters.
+                containing multiple sub-filters.
         Returns:
             dict: A dictionary representing the MongoDB query.
         Supported Filter Types:
@@ -32,11 +32,15 @@ class MongoDBHandler:
 
         match filter_obj.type:
             case FilterType.AND:
+                if not filter_obj.filters:
+                    return {}
                 return {
                     '$and': [MongoDBHandler.convert_filter_to_query(f) for f in filter_obj.filters]
                 }
 
             case FilterType.OR:
+                if not filter_obj.filters:
+                    return {}
                 return {
                     '$or': [MongoDBHandler.convert_filter_to_query(f) for f in filter_obj.filters]
                 }

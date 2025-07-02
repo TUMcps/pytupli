@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from typing_extensions import Annotated
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from pytupli.server.api.dependencies import get_db_handler
 from pytupli.schema import BaseFilter, EpisodeHeader, EpisodeItem, Episode, User
@@ -93,13 +94,12 @@ async def episodes_delete(
 
 @router.get('/list')
 async def episodes_list(
-    filter: BaseFilter = None,
+    filter: Annotated[BaseFilter, Query()] = BaseFilter(),
     include_tuples: bool = False,
     db_handler: MongoDBHandler = Depends(get_db_handler),
     user: User = Depends(check_authentication),
 ) -> list[EpisodeHeader] | list[EpisodeItem]:
     filter = await inject_read_permission_filter(filter, user, db_handler)
-
     try:
         episodes = await db_handler.query_items(
             EPISODES_COLLECTION_NAME,

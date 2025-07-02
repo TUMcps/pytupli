@@ -165,10 +165,16 @@ def test_chained_filters(benchmark_with_episodes, test_storage):
         .with_episode_filter(FilterEQ(key="id", value=episode_with_action_one.id))
         .with_tuple_filter(lambda t: t.action == 1)
     )
+    filtered_dataset_eps = (
+        dataset.with_benchmark_filter(FilterEQ(key="id", value=benchmark_with_episodes.id))
+        .with_episode_filter(FilterEQ(key="id", value=episode_with_action_one.id))
+    )
 
     # Load and verify
     filtered_dataset.load()
+    filtered_dataset_eps.load()
     assert len(filtered_dataset.tuples) > 0
+    assert len(filtered_dataset_eps.episodes) == 1
     assert all(t.action == 1 for t in filtered_dataset.tuples)
 
 if __name__ == '__main__':

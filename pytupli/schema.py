@@ -186,17 +186,14 @@ class FilterType(str, Enum):
 
 
 class BaseFilter(BaseModel):
-    type: FilterType
+    type: FilterType = FilterType.OR
     key: Optional[str] = None
     value: Optional[Any] = None
-    filters: Optional[List[BaseFilter]] = None
+    filters: Optional[List[BaseFilter]] = []
 
     @model_validator(mode='after')
     def validate_filter_attributes(self) -> Self:
-        if self.type in [FilterType.AND, FilterType.OR]:
-            if not self.filters:
-                raise ValueError(f'{self.type} filter must have filters attribute')
-        else:
+        if self.type not in [FilterType.AND, FilterType.OR]:
             if self.key is None or self.value is None:
                 raise ValueError(f'{self.type} filter must have key and value set')
 
@@ -225,6 +222,19 @@ class BaseFilter(BaseModel):
         else:
             # Create a new OR filter with both filters
             return FilterOR(filters=[self, other])
+
+    def to_params_dict(self, params: dict = {}) -> dict[str, Any]:
+        """Convert the filter to a dictionary suitable for query parameters.
+        Keys are added to the provided oiptional params dictionary."""
+        return {**params, **self.model_dump(exclude_none=True)}
+
+    def apply_prefix(self, prefix: str):
+        """Apply a prefix to the key and all subfilters."""
+        if self.key:
+            self.key = f'{prefix}.{self.key}'
+        if self.filters:
+            for f in self.filters:
+                f.apply_prefix(prefix)
 
 
 class FilterEQ(BaseFilter):
