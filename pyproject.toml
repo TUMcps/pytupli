@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pytupli"
-version = "1.1.4"
+version = "1.1.5"
 authors = [
     "Michael Eichelbeck <michael.eichelbeck@tum.de>",
     "Hannah Markgraf <hannah.markgraf@tum.de>",
@@ -42,7 +42,7 @@ optional = true
 pymongo = "^4.11.3"
 python-dotenv = "^1.0.1"
 fastapi = "^0.115.11"
-uvicorn = "^0.34.0"
+uvicorn = "^0.35.0"
 python-multipart = "^0.0.20"
 bcrypt = "^4.3.0"
 passlib = "^1.7.4"
