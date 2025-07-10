@@ -3,12 +3,11 @@ import tempfile
 import os
 from typing import Annotated
 
-from fastapi.params import Query
 from gridfs import NoFile
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from fastapi.responses import FileResponse
 
-from pytupli.schema import ArtifactMetadata, ArtifactMetadataItem, BaseFilter, User
+from pytupli.schema import ArtifactMetadata, ArtifactMetadataItem, User, BaseFilter
 from pytupli.server.api.dependencies import get_db_handler
 from pytupli.server.db.db_handler import MongoDBHandler
 from pytupli.server.config import (  # environment variables, constants and Handler Factory
@@ -98,9 +97,9 @@ async def artifact_publish(
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
-@router.get('/list')
+@router.post('/list')
 async def artifact_list(
-    filter: Annotated[BaseFilter, Query()] = BaseFilter(),
+    filter: BaseFilter = BaseFilter(),
     db_handler: MongoDBHandler = Depends(get_db_handler),
     user: User = Depends(check_authentication),
 ) -> list[ArtifactMetadataItem]:

@@ -1,8 +1,7 @@
-from typing_extensions import Annotated
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, status
 
 from pytupli.server.api.dependencies import get_db_handler
-from pytupli.schema import BaseFilter, EpisodeHeader, EpisodeItem, Episode, User
+from pytupli.schema import EpisodeHeader, EpisodeItem, Episode, User, BaseFilter
 from pytupli.server.db.db_handler import MongoDBHandler
 from pytupli.server.config import (  # environment variables, constants and Handler Factory
     BENCHMARK_COLLECTION_NAME,
@@ -11,6 +10,10 @@ from pytupli.server.config import (  # environment variables, constants and Hand
 from pytupli.server.management.security import check_authentication, inject_read_permission_filter
 
 router = APIRouter()
+
+
+class EpisodesListRequest(BaseFilter):
+    include_tuples: bool = False
 
 
 @router.post('/record')
@@ -92,26 +95,25 @@ async def episodes_delete(
         )
 
 
-@router.get('/list')
+@router.post('/list')
 async def episodes_list(
-    filter: Annotated[BaseFilter, Query()] = BaseFilter(),
-    include_tuples: bool = False,
+    request: EpisodesListRequest = EpisodesListRequest(),
     db_handler: MongoDBHandler = Depends(get_db_handler),
     user: User = Depends(check_authentication),
 ) -> list[EpisodeHeader] | list[EpisodeItem]:
-    filter = await inject_read_permission_filter(filter, user, db_handler)
+    filter = await inject_read_permission_filter(request, user, db_handler)
     try:
         episodes = await db_handler.query_items(
             EPISODES_COLLECTION_NAME,
             filter,
             projection={'tuples': 0}
-            if not include_tuples
+            if not request.include_tuples
             else None,  # Optionally exlude tuples from the result to reduce traffic
         )
 
         return (
             [EpisodeHeader(**episode) for episode in episodes]
-            if not include_tuples
+            if not request.include_tuples
             else [EpisodeItem(**episode) for episode in episodes]
         )
 

@@ -135,7 +135,7 @@ async def test_benchmarks_list(
     _, b2 = published_benchmark_admin
 
     # List benchmarks
-    response = await async_client.get('/benchmarks/list', headers=admin_headers)
+    response = await async_client.post('/benchmarks/list', headers=admin_headers, json={})
     assert response.status_code == 200
 
     benchmarks = [BenchmarkHeader(**b) for b in response.json()]

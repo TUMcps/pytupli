@@ -150,7 +150,7 @@ async def test_JWT_creation(async_client):
     # Check if Token is valid
     jwt = response.json()['access_token']['token']
     headers = {'Authorization': f'Bearer {jwt}'}
-    response = await async_client.get('/benchmarks/list', headers=headers)
+    response = await async_client.post('/benchmarks/list', headers=headers)
     assert response.status_code == 200
 
 
