@@ -594,9 +594,10 @@ class TupliAPIClient(TupliStorage):
         Returns:
             list[BenchmarkHeader]: A list of benchmark headers that match the filter.
         """
-        params = filter.to_params_dict() if filter else {}
+        json_data = filter.model_dump() if filter else {}
+
         response = self._authenticated_request(
-            'get', f'{self.base_url}/benchmarks/list', params=params
+            'post', f'{self.base_url}/benchmarks/list', json=json_data
         )
         return [BenchmarkHeader(**benchmark) for benchmark in response.json()]
 
@@ -610,9 +611,10 @@ class TupliAPIClient(TupliStorage):
         Returns:
             list[ArtifactMetadataItem]: A list of artifacts that match the filter.
         """
-        params = filter.to_params_dict() if filter else {}
+        json_data = filter.model_dump() if filter else {}
+
         response = self._authenticated_request(
-            'get', f'{self.base_url}/artifacts/list', params=params
+            'post', f'{self.base_url}/artifacts/list', json=json_data
         )
         return [ArtifactMetadataItem(**artifact) for artifact in response.json()]
 
@@ -660,14 +662,15 @@ class TupliAPIClient(TupliStorage):
         Returns:
             list[EpisodeHeader] | list[EpisodeItem]: A list of episode headers or full episode items.
         """
-        params = {'include_tuples': str(include_tuples).lower()}
-        if filter:
-            params = filter.to_params_dict(params)
+        json_data = {
+            **(filter.model_dump() if filter else {}),
+            'include_tuples': include_tuples,
+        }
 
         response = self._authenticated_request(
-            'get',
+            'post',
             f'{self.base_url}/episodes/list',
-            params=params,
+            json=json_data,
         )
 
         if include_tuples:

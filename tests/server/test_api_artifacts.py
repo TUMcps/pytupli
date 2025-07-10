@@ -70,7 +70,7 @@ async def test_artifact_download_non_existing(async_client, admin_headers):
 async def test_artifact_list_insufficient_rights(
     async_client, uploaded_artifact_admin, standard_user1_headers
 ):
-    response = await async_client.get('/artifacts/list', headers=standard_user1_headers)
+    response = await async_client.post('/artifacts/list', headers=standard_user1_headers)
     assert response.status_code == 200
     artifacts = response.json()
     assert len(artifacts) == 0
@@ -96,7 +96,7 @@ async def test_artifact_published_list(
         _,
     ) = published_artifact_admin
 
-    response = await async_client.get('/artifacts/list', headers=standard_user1_headers)
+    response = await async_client.post('/artifacts/list', headers=standard_user1_headers)
     assert response.status_code == 200
     artifacts: list[ArtifactMetadataItem] = [ArtifactMetadataItem(**d) for d in response.json()]
     assert len(artifacts) == 1

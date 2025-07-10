@@ -182,9 +182,10 @@ PyTupli is maintained by the Cyber-Physical Systems Group at the Chair for Robot
 
 If you use PyTupli, please include the following reference
 ```
-@misc{markgraf2025pytupli,
-      title={{PyTupli}: A Scalable Infrastructure for Collaborative Offline RL Projects},
-      author={Hannah Markgraf and Michael Eichelbeck and Matthias Althoff},
-      year={2025},
+@article{markgraf2025pytupli,
+  title={PyTupli: A Scalable Infrastructure for Collaborative Offline Reinforcement Learning Projects},
+  author={Markgraf, Hannah and Eichelbeck, Michael and Cappey, Daria and Demirt{\"u}rk, Selin and Schattschneider, Yara and Althoff, Matthias},
+  journal={arXiv preprint arXiv:2505.16754},
+  year={2025}
 }
 ```

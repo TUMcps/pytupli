@@ -305,11 +305,11 @@ async def list_episodes(async_client, filter_data=None, include_tuples=False, he
     """List episodes with optional filtering"""
     url = '/episodes/list'
 
-    params = {'include_tuples': str(include_tuples).lower()}
-    if filter_data:
-        params = filter_data.to_params_dict(params)
-
-    response = await async_client.get(url, headers=headers, params=params)
+    json_data = {
+        **(filter_data.model_dump() if filter_data else {}),
+        'include_tuples': include_tuples,
+    }
+    response = await async_client.post(url, headers=headers, json=json_data)
 
     if response.status_code == 200:
         if include_tuples:

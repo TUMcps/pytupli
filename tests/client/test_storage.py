@@ -80,6 +80,25 @@ def test_list_benchmarks_with_filter(storage, sample_benchmark_stored):
 
 
 @pytest.mark.parametrize('storage', STORAGE_TYPES, indirect=True)
+def test_list_episodes_with_nested_filter(storage, sample_benchmark_stored, sample_episode_stored):
+    """Test listing episodes with a nested filter."""
+    # Create a filter
+    episode_filter = FilterEQ(key='id', value=sample_episode_stored.id)
+    # benchmark id filter
+    benchmark_filter = FilterEQ(key='benchmark_id', value=sample_benchmark_stored)
+    # nested filter combining both
+    nested_filter = episode_filter & benchmark_filter
+    # Execute list_episodes with filter
+    episode_list = storage.list_episodes(filter=nested_filter)
+    # Verify results
+    assert episode_list is not None
+    assert isinstance(episode_list, list)
+    assert len(episode_list) == 1, 'Expected exactly one episode matching filter'
+    assert isinstance(episode_list[0], EpisodeHeader)
+    assert episode_list[0].metadata.get('agent') == 'test_agent'
+
+
+@pytest.mark.parametrize('storage', STORAGE_TYPES, indirect=True)
 def test_delete_benchmark(storage, sample_benchmark_stored):
     """Test deleting a benchmark."""
     benchmark_id = sample_benchmark_stored
@@ -266,6 +285,25 @@ def test_list_episodes_with_filter(storage, sample_episode_stored):
     # Execute list_episodes with filter
     episode_list = storage.list_episodes(filter=episode_filter)
 
+    # Verify results
+    assert episode_list is not None
+    assert isinstance(episode_list, list)
+    assert len(episode_list) == 1, 'Expected exactly one episode matching filter'
+    assert isinstance(episode_list[0], EpisodeHeader)
+    assert episode_list[0].metadata.get('agent') == 'test_agent'
+
+
+@pytest.mark.parametrize('storage', STORAGE_TYPES, indirect=True)
+def test_list_episodes_with_nested_filter(storage, sample_benchmark_stored, sample_episode_stored, sample_episode_2_stored):
+    """Test listing episodes with a nested filter."""
+    # Create a filter
+    episode_filter = FilterEQ(key='id', value=sample_episode_stored)
+    # benchmark id filter
+    benchmark_filter = FilterEQ(key='benchmark_id', value=sample_benchmark_stored)
+    # nested filter combining both
+    nested_filter = episode_filter & benchmark_filter
+    # Execute list_episodes with filter
+    episode_list = storage.list_episodes(filter=nested_filter)
     # Verify results
     assert episode_list is not None
     assert isinstance(episode_list, list)

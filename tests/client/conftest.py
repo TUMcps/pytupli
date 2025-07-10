@@ -264,12 +264,51 @@ def sample_episode(sample_benchmark_stored):
         ],
     )
 
+@pytest.fixture(scope='function')
+def sample_episode_2(sample_benchmark_stored):
+    """Create a sample episode for testing."""
+    benchmark_id = sample_benchmark_stored
+
+    return Episode(
+        benchmark_id=benchmark_id,
+        metadata={'agent': 'test_agent', 'version': '1.0'},
+        tuples=[
+            RLTuple(
+                state={'position': 0.5, 'velocity': 0.5},
+                action=1,
+                reward=1.0,
+                info={},
+                terminal=False,
+                timeout=False,
+            ),
+            RLTuple(
+                state={'position': 0.1, 'velocity': 0.1},
+                action=1,
+                reward=0.1,
+                info={},
+                terminal=True,
+                timeout=False,
+            ),
+        ],
+    )
 
 @pytest.fixture(scope='function')
 def sample_episode_stored(request, storage, sample_episode):
     """Store an episode and return its ID for further tests."""
     # Store the episode using the real storage
     episode_header = storage.record_episode(sample_episode)
+
+    # Return the stored ID for test
+    yield episode_header.id
+
+    # Cleanup after test finishes
+    admin_cleanup(storage, 'episode', episode_header.id)
+
+@pytest.fixture(scope='function')
+def sample_episode_2_stored(request, storage, sample_episode_2):
+    """Store an episode and return its ID for further tests."""
+    # Store the episode using the real storage
+    episode_header = storage.record_episode(sample_episode_2)
 
     # Return the stored ID for test
     yield episode_header.id
