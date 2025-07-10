@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pytupli"
-version = "1.1.4"
+version = "1.1.5"
 authors = [
     "Michael Eichelbeck <michael.eichelbeck@tum.de>",
     "Hannah Markgraf <hannah.markgraf@tum.de>",
@@ -56,7 +56,7 @@ pytest = "8.3.5"
 pytest-cov = "^6.0.0"
 httpx = "^0.28.1"
 asgi-lifespan = "^2.1.0"
-pytest-asyncio = "^0.26.0"
+pytest-asyncio = "^1.0.0"
 pytest-forked = "^1.6.0"
 
 
