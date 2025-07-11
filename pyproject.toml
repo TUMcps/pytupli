@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pytupli"
-version = "1.1.5"
+version = "1.1.6"
 authors = [
     "Michael Eichelbeck <michael.eichelbeck@tum.de>",
     "Hannah Markgraf <hannah.markgraf@tum.de>",
@@ -41,8 +41,8 @@ optional = true
 [tool.poetry.group.server.dependencies]
 pymongo = "^4.11.3"
 python-dotenv = "^1.0.1"
-fastapi = "^0.115.11"
-uvicorn = "^0.35.0"
+fastapi = "^0.116.0"
+uvicorn = "^0.34.0"
 python-multipart = "^0.0.20"
 bcrypt = "^4.3.0"
 passlib = "^1.7.4"
@@ -52,11 +52,11 @@ motor = "^3.7.0"
 [tool.poetry.group.tests]
 optional = true
 [tool.poetry.group.tests.dependencies]
-pytest = "8.3.5"
+pytest = "8.4.1"
 pytest-cov = "^6.0.0"
 httpx = "^0.28.1"
 asgi-lifespan = "^2.1.0"
-pytest-asyncio = "^0.26.0"
+pytest-asyncio = "^1.0.0"
 pytest-forked = "^1.6.0"
 
 

@@ -27,7 +27,7 @@ services:
       - .env
 
   nginx:
-    image: nginx:1.28.0-alpine
+    image: nginx:1.29.0-alpine
     restart: always
     # nginx will immediately crash with `nginx: [emerg] host not found in upstream`
     # if api_server is not up
