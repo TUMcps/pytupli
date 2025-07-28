@@ -24,6 +24,8 @@ class DBItem(BaseModel):
 class ArtifactMetadata(BaseModel):
     name: str
     description: str = ''
+    # Artifacts can be associated with a specific benchmark or stand for themselves, e.g., if they are used by multiple benchmarks
+    benchmark_id: str | None = None
     # Allow for additional arbitrary metadata
     extra: Dict[str, Any] = {}
 
