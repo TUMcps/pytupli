@@ -1,8 +1,21 @@
 """Test methods of dataset module."""
 import pytest
 import numpy as np
-from pytupli.dataset import TupliDataset
+from pytupli.dataset import TupliDataset, NumpyTupleParser, TensorflowTupleParser, TorchTupleParser
 from pytupli.schema import FilterEQ, RLTuple
+
+# Optional imports for testing
+try:
+    import torch
+    TORCH_AVAILABLE = True
+except ImportError:
+    TORCH_AVAILABLE = False
+
+try:
+    import tensorflow as tf
+    TF_AVAILABLE = True
+except ImportError:
+    TF_AVAILABLE = False
 
 def test_dataset_initialization(test_storage):
     """Test basic initialization of TupliDataset."""
@@ -126,7 +139,7 @@ def test_convert_to_numpy(benchmark_with_episodes, test_storage):
     dataset = TupliDataset(test_storage)
     dataset.load()
 
-    observations, actions, rewards, terminals, timeouts = dataset.convert_to_numpy()
+    observations, actions, rewards, terminals, timeouts = dataset.convert_to_tensors(parser=NumpyTupleParser)
 
     assert isinstance(observations, np.ndarray)
     assert isinstance(actions, np.ndarray)
@@ -140,6 +153,62 @@ def test_convert_to_numpy(benchmark_with_episodes, test_storage):
     assert rewards.shape[0] == 6
     assert terminals.shape[0] == 6
     assert timeouts.shape[0] == 6
+
+@pytest.mark.skipif(not TORCH_AVAILABLE, reason="PyTorch not installed")
+def test_convert_to_torch(benchmark_with_episodes, test_storage):
+    """Test conversion of tuples to PyTorch tensors."""
+    dataset = TupliDataset(test_storage)
+    dataset.load()
+
+    observations, actions, rewards, terminals, timeouts = dataset.convert_to_tensors(parser=TorchTupleParser)
+
+    assert isinstance(observations, torch.Tensor)
+    assert isinstance(actions, torch.Tensor)
+    assert isinstance(rewards, torch.Tensor)
+    assert isinstance(terminals, torch.Tensor)
+    assert isinstance(timeouts, torch.Tensor)
+
+    # Check shapes (6 tuples total from 3 episodes with 2 steps each)
+    assert observations.shape[0] == 6
+    assert actions.shape[0] == 6
+    assert rewards.shape[0] == 6
+    assert terminals.shape[0] == 6
+    assert timeouts.shape[0] == 6
+
+    # Check dtypes
+    assert observations.dtype == torch.float32
+    assert actions.dtype == torch.float32
+    assert rewards.dtype == torch.float32
+    assert terminals.dtype == torch.bool
+    assert timeouts.dtype == torch.bool
+
+@pytest.mark.skipif(not TF_AVAILABLE, reason="TensorFlow not installed")
+def test_convert_to_tensorflow(benchmark_with_episodes, test_storage):
+    """Test conversion of tuples to TensorFlow tensors."""
+    dataset = TupliDataset(test_storage)
+    dataset.load()
+
+    observations, actions, rewards, terminals, timeouts = dataset.convert_to_tensors(parser=TensorflowTupleParser)
+
+    assert isinstance(observations, tf.Tensor)
+    assert isinstance(actions, tf.Tensor)
+    assert isinstance(rewards, tf.Tensor)
+    assert isinstance(terminals, tf.Tensor)
+    assert isinstance(timeouts, tf.Tensor)
+
+    # Check shapes (6 tuples total from 3 episodes with 2 steps each)
+    assert observations.shape[0] == 6
+    assert actions.shape[0] == 6
+    assert rewards.shape[0] == 6
+    assert terminals.shape[0] == 6
+    assert timeouts.shape[0] == 6
+
+    # Check dtypes
+    assert observations.dtype == tf.float32
+    assert actions.dtype == tf.float32
+    assert rewards.dtype == tf.float32
+    assert terminals.dtype == tf.bool
+    assert timeouts.dtype == tf.bool
 
 def test_chained_filters(benchmark_with_episodes, test_storage):
     """Test chaining multiple filters together."""
