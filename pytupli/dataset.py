@@ -18,6 +18,130 @@ from pytupli.schema import (
 )
 from pytupli.storage import TupliStorage
 
+try:
+    import torch
+
+    TORCH_AVAILABLE = True
+except ImportError:
+    TORCH_AVAILABLE = False
+
+try:
+    import tensorflow as tf
+
+    TF_AVAILABLE = True
+except ImportError:
+    TF_AVAILABLE = False
+
+try:
+    import pandas as pd
+
+    PANDAS_AVAILABLE = True
+except ImportError:
+    PANDAS_AVAILABLE = False
+
+
+class BaseTupleParser:
+    """Base class for parsing (nested) lists of obs/act/reward/term/trunc into tensors for other formats like numpy arrays, PyTorch tensors, etc.
+    This class can be extended to implement specific parsing logic for different formats.
+    """
+
+    @classmethod
+    def parse_lists(
+        cls,
+        obs: list[list[float]],
+        act: list[list[float]],
+        rew: list[float],
+        term: list[bool],
+        trunc: list[bool],
+    ) -> tuple:
+        """Parses the input lists into a format suitable for further processing.
+
+        Args:
+            obs (list[list[float]]): List of observations.
+            act (list[list[float]]): List of actions.
+            rew (list[float]): List of rewards.
+            term (list[bool]): List of terminal flags.
+            trunc (list[bool]): List of timeout flags.
+
+        Returns:
+            tuple: A tuple containing the parsed data in a suitable format.
+        """
+        raise NotImplementedError('This method should be overridden by subclasses.')
+
+
+class NumpyTupleParser(BaseTupleParser):
+    """Parser for converting lists of observations, actions, rewards, terminal flags, and timeout flags into numpy arrays."""
+
+    @classmethod
+    def parse_lists(
+        cls,
+        obs: list[list[float]],
+        act: list[list[float]],
+        rew: list[float],
+        term: list[bool],
+        trunc: list[bool],
+    ) -> tuple:
+        """Converts lists to numpy arrays."""
+        obs_array = np.array(obs, dtype=np.float32)
+        act_array = np.array(act, dtype=np.float32)
+        rew_array = np.array(rew, dtype=np.float32)
+        term_array = np.array(term, dtype=np.bool_)
+        trunc_array = np.array(trunc, dtype=np.bool_)
+
+        return obs_array, act_array, rew_array, term_array, trunc_array
+
+
+class TorchTupleParser(BaseTupleParser):
+    """Parser for converting lists of observations, actions, rewards, terminal flags, and timeout flags into PyTorch tensors."""
+
+    @classmethod
+    def parse_lists(
+        cls,
+        obs: list[list[float]],
+        act: list[list[float]],
+        rew: list[float],
+        term: list[bool],
+        trunc: list[bool],
+    ) -> tuple:
+        """Converts lists to PyTorch tensors."""
+        if not TORCH_AVAILABLE:
+            raise ImportError('PyTorch is not installed. Please install it with: pip install torch')
+
+        obs_tensor = torch.tensor(obs, dtype=torch.float32)
+        act_tensor = torch.tensor(act, dtype=torch.float32)
+        rew_tensor = torch.tensor(rew, dtype=torch.float32)
+        term_tensor = torch.tensor(term, dtype=torch.bool)
+        trunc_tensor = torch.tensor(trunc, dtype=torch.bool)
+
+        return obs_tensor, act_tensor, rew_tensor, term_tensor, trunc_tensor
+
+
+class TensorflowTupleParser(BaseTupleParser):
+    """Parser for converting lists of observations, actions, rewards, terminal flags, and timeout flags into TensorFlow tensors."""
+
+    @classmethod
+    def parse_lists(
+        cls,
+        obs: list[list[float]],
+        act: list[list[float]],
+        rew: list[float],
+        term: list[bool],
+        trunc: list[bool],
+    ) -> tuple:
+        """Converts lists to TensorFlow tensors."""
+        if not TF_AVAILABLE:
+            raise ImportError(
+                'TensorFlow is not installed. Please install it with: pip install tensorflow'
+            )
+
+        obs_tensor = tf.constant(obs, dtype=tf.float32)
+        act_tensor = tf.constant(act, dtype=tf.float32)
+        rew_tensor = tf.constant(rew, dtype=tf.float32)
+        term_tensor = tf.constant(term, dtype=tf.bool)
+        trunc_tensor = tf.constant(trunc, dtype=tf.bool)
+
+        return obs_tensor, act_tensor, rew_tensor, term_tensor, trunc_tensor
+
 
 class TupliDataset:
     """A dataset class for downloading, managing and filtering offline RL tuple data.
@@ -183,20 +307,84 @@ class TupliDataset:
         self._fetch_episodes(with_tuples=False)
         return random.sample(self.episodes, min(n_samples, len(self.episodes)))
 
-    def convert_to_numpy(self) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-        """Converts the dataset tuples into numpy arrays.
+    def convert_to_tensors(self, parser: type[BaseTupleParser] = NumpyTupleParser) -> tuple:
+        """Converts the dataset tuples into tensors of the format specified by handing over the respective parser.
+
+        Args:
+            parser (BaseTupleParser): The parser to use for converting tuples.
 
         Returns:
-            tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]: A tuple containing:
+            tuple: A tuple containing tensors in the specified format:
+                - observations: Tensor/Array of state observations
+                - actions: Tensor/Array of actions
+                - rewards: Tensor/Array of rewards
+                - terminals: Tensor/Array of terminal flags
+                - timeouts: Tensor/Array of timeout flags
+
+        Raises:
+            ValueError: If an unsupported format is specified.
+            ImportError: If the required library for the format is not installed.
+        """
+        # First, convert tuples to lists
+        observations = [tuple.state for tuple in self.tuples]
+        actions = [tuple.action for tuple in self.tuples]
+        rewards = [tuple.reward for tuple in self.tuples]
+        terminals = [tuple.terminal for tuple in self.tuples]
+        timeouts = [tuple.timeout for tuple in self.tuples]
+
+        # Use the parser to convert lists to the desired format
+        return parser.parse_lists(observations, actions, rewards, terminals, timeouts)
+
+    def convert_to_d4rl_format(self) -> dict[str, np.ndarray]:
+        """Converts the dataset tuples into the format used by D4RL.
+
+        Returns:
+            dict[str, np.ndarray]: A dictionary containing:
                 - observations: Array of state observations
                 - actions: Array of actions
+                - next_observations: Array of next state observations
                 - rewards: Array of rewards
                 - terminals: Array of terminal flags
-                - timeouts: Array of timeout flags
         """
-        observations = np.array([tuple.state for tuple in self.tuples], dtype=np.float64)
-        actions = np.array([tuple.action for tuple in self.tuples], dtype=np.float64)
-        rewards = np.array([tuple.reward for tuple in self.tuples], dtype=np.float64)
-        terminals = np.array([tuple.terminal for tuple in self.tuples], dtype=np.float64)
-        timeouts = np.array([tuple.timeout for tuple in self.tuples], dtype=np.float64)
-        return observations, actions, rewards, terminals, timeouts
+        obs, act, rew, term, time = self.convert_to_tensors()
+
+        # Create next_observations by shifting observations by one step
+        # For the last observation, we duplicate it (common practice in D4RL)
+        next_obs = np.concatenate([obs[1:], obs[-1:]], axis=0)
+
+        return {
+            'observations': obs,
+            'actions': act,
+            'next_observations': next_obs,
+            'rewards': rew,
+            'terminals': np.logical_or(term, time),  # Combine terminal and timeout flags
+        }
+
+    def convert_to_dataframe(self):
+        """Converts the dataset tuples into a pandas DataFrame.
+
+        Returns:
+            pd.DataFrame: A DataFrame containing:
+                - observations: State observations
+                - actions: Actions taken
+                - next_observations: Next state observations
+                - rewards: Rewards received
+                - terminals: Terminal flags
+
+        Raises:
+            ImportError: If pandas is not installed.
+        """
+        if not PANDAS_AVAILABLE:
+            raise ImportError('pandas is not installed. Please install it with: pip install pandas')
+
+        d4rl_data = self.convert_to_d4rl_format()
+
+        return pd.DataFrame(
+            {
+                'observations': list(d4rl_data['observations']),
+                'actions': list(d4rl_data['actions']),
+                'next_observations': list(d4rl_data['next_observations']),
+                'rewards': list(d4rl_data['rewards']),
+                'terminals': list(d4rl_data['terminals']),
+            }
+        )

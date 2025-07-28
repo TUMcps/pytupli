@@ -169,7 +169,7 @@ dataset_summer = TupliDataset(
     ).with_benchmark_filter(filter_benchmark).with_episode_filter(filter_summer)
 dataset_summer.load()
 # Convert to d3rlpy dataset
-obs, act, rew, term, trunc = dataset_summer.convert_to_numpy()
+obs, act, rew, term, trunc = dataset_summer.convert_to_tensors()
 ```
 For a comprehensive guide covering most of PyTupli's functionality, including recording episodes, managing artifacts, and creating datasets, please refer to the Introduction.ipynb tutorial in the docs/source/tutorials directory.
 
