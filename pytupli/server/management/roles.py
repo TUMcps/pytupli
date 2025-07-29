@@ -1,64 +1,99 @@
-"""
-This is a setup script to set up the database with all roles and an admin user.
-"""
-
 import asyncio
-import logging
 import os
 
-from pytupli.server.db.db_handler import MongoDBHandler
-from pytupli.server.config import (
-    USER_COLLECTION_NAME,
-    USER_ROLES_COLLECTION_NAME,
-    DBHandlerFactory,
+from pytupli.schema import (
+    RIGHT_BUNDLE_CONTENT_CREATE,
+    RIGHT_BUNDLE_CONTENT_DELETE,
+    RIGHT_BUNDLE_CONTENT_READ,
+    DEFAULT_ROLE,
+    RIGHT,
+    Membership,
+    User,
 )
-from pytupli.server.management.security import hash_password
+from pytupli.server.config import USER_COLLECTION_NAME, USER_ROLES_COLLECTION_NAME, DBHandlerFactory
+from pytupli.server.db.db_handler import MongoDBHandler
+from pytupli.server.management.authorization import hash_password
 
-# passlib bcrypt has little bug of getting verions of bcrypt
-# supress these warnings
-logging.getLogger('passlib').setLevel(logging.ERROR)
 
-"""
-Rights:
-All users can read and delete their own contents and can read all public contents.
-
-The following rights enable you to do following:
-user_management - for user management
-read_all - you can read all contents that are public and private
-write - you can upload new content
-delete_all - you can delete contents that are not yours in the private section and also to delete public contents
-"""
-roles_rights = {
-    'admin': ['user_management', 'read_all', 'write', 'delete_all'],  # all rights
-    'standard_user': ['write'],  # right to create content
-    'user_admin': ['user_management'],  # right to manage users
-    'content_admin': [
-        'read_all',
-        'write',
-        'delete_all',
-    ],  # read, write and delete rights for the whole space - except user management
-}
-
-roles = [
+default_roles = [
     {
-        'role': 'admin',
-        'rights': roles_rights['admin'],
-        'description': 'All rights',
+        'role': DEFAULT_ROLE.ADMIN,
+        'rights': [
+            *RIGHT_BUNDLE_CONTENT_READ,
+            *RIGHT_BUNDLE_CONTENT_CREATE,
+            *RIGHT_BUNDLE_CONTENT_DELETE,
+            RIGHT.USER_CREATE,
+            RIGHT.USER_READ,
+            RIGHT.USER_UPDATE,
+            RIGHT.USER_DELETE,
+            RIGHT.GROUP_CREATE,
+            RIGHT.GROUP_READ,
+            RIGHT.GROUP_UPDATE,
+            RIGHT.GROUP_DELETE,
+            RIGHT.ROLE_MANAGEMENT,
+        ],
+        'description': 'Full access to all resources and management functions.',
     },
     {
-        'role': 'user_admin',
-        'rights': roles_rights['user_admin'],
-        'description': 'User management rights only',
+        'role': DEFAULT_ROLE.CONTENT_ADMIN,
+        'rights': [
+            *RIGHT_BUNDLE_CONTENT_READ,
+            *RIGHT_BUNDLE_CONTENT_CREATE,
+            *RIGHT_BUNDLE_CONTENT_DELETE,
+        ],
+        'description': 'Can create, edit, and delete content.',
     },
     {
-        'role': 'content_admin',
-        'rights': roles_rights['content_admin'],
-        'description': 'Read+write+delete for self owned as well as read+delete rights for all user objects',
+        'role': DEFAULT_ROLE.USER_ADMIN,
+        'rights': [
+            RIGHT.USER_CREATE,
+            RIGHT.USER_READ,
+            RIGHT.USER_UPDATE,
+            RIGHT.USER_DELETE,
+        ],
+        'description': 'Can manage users.',
     },
     {
-        'role': 'standard_user',
-        'rights': roles_rights['standard_user'],
-        'description': 'Read rights for all public and read+write+delete for self owned objects',
+        'role': DEFAULT_ROLE.GROUP_ADMIN,
+        'rights': [
+            RIGHT.GROUP_CREATE,
+            RIGHT.GROUP_READ,
+            RIGHT.GROUP_UPDATE,
+            RIGHT.GROUP_DELETE,
+            RIGHT.USER_READ,
+        ],
+        'description': 'Can manage groups.',
+    },
+    {
+        'role': DEFAULT_ROLE.GUEST,
+        'rights': RIGHT_BUNDLE_CONTENT_READ,
+        'description': 'Limited access for guest users.',
+    },
+    {
+        'role': DEFAULT_ROLE.CONTRIBUTOR,
+        'rights': [
+            *RIGHT_BUNDLE_CONTENT_CREATE,
+            *RIGHT_BUNDLE_CONTENT_READ,
+        ],
+        'description': 'Can create and read content.',
+    },
+    {
+        'role': DEFAULT_ROLE.MEMBER,
+        'rights': [
+            RIGHT.GROUP_READ,
+            RIGHT.USER_READ,
+            *RIGHT_BUNDLE_CONTENT_READ,
+        ],
+        'description': 'Can create and read content in a group.',
+    },
+    {
+        'role': DEFAULT_ROLE.GLOBAL_MEMBER,
+        'rights': [
+            RIGHT.GROUP_CREATE,
+            RIGHT.USER_READ,
+            *RIGHT_BUNDLE_CONTENT_READ,
+        ],
+        'description': 'Can read content and create groups.',
     },
 ]
 
@@ -71,7 +106,7 @@ async def initialize_roles(db_handler: MongoDBHandler):
     r = await db_handler.get_items(USER_ROLES_COLLECTION_NAME, {})
     existing_roles = [role['role'] for role in r]
     all_roles_exist = False
-    for role in roles:
+    for role in default_roles:
         if role['role'] not in existing_roles:
             all_roles_exist = False
             break
@@ -79,7 +114,7 @@ async def initialize_roles(db_handler: MongoDBHandler):
     if all_roles_exist:
         print('Roles already exist')
         return
-    res = await db_handler.create_items(USER_ROLES_COLLECTION_NAME, roles)
+    res = await db_handler.create_items(USER_ROLES_COLLECTION_NAME, default_roles)
     print(res)
 
 
@@ -93,7 +128,12 @@ async def create_admin(db_handler: MongoDBHandler, admin_pw: str):
         return
     hashed_password = hash_password(admin_pw)
     res = await db_handler.create_item(
-        USER_COLLECTION_NAME, {'username': 'admin', 'password': hashed_password, 'roles': ['admin']}
+        collection=USER_COLLECTION_NAME,
+        item=User(
+            username='admin',
+            password=hashed_password,
+            memberships=[Membership(group='global', roles=[DEFAULT_ROLE.ADMIN.value])],
+        ).model_dump(),
     )
     print(res)
 

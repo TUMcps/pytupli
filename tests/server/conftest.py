@@ -6,6 +6,9 @@ from pytupli.schema import (
     BenchmarkQuery,
     ArtifactMetadata,
     ArtifactMetadataItem,
+    Group,
+    GroupMembership,
+    GroupMembershipQuery,
     RLTuple,
     Episode,
     BenchmarkHeader,
@@ -43,7 +46,7 @@ async def admin_headers(async_client):
 @pytest.fixture(scope='function')
 async def standard_user1_headers(async_client, admin_headers):
     resp = await async_client.post(
-        '/access/signup',
+        '/access/users/create',
         json={'username': 'test_user_1', 'password': 'test1234'},
         headers=admin_headers,
     )
@@ -54,7 +57,7 @@ async def standard_user1_headers(async_client, admin_headers):
 
     # cleanup
     resp = await async_client.delete(
-        '/access/delete-user?username=test_user_1', headers=admin_headers
+        '/access/users/delete?username=test_user_1', headers=admin_headers
     )
     assert resp.status_code == 200
 
@@ -62,7 +65,7 @@ async def standard_user1_headers(async_client, admin_headers):
 @pytest.fixture(scope='function')
 async def standard_user2_headers(async_client, admin_headers):
     resp = await async_client.post(
-        '/access/signup',
+        '/access/users/create',
         json={'username': 'test_user_2', 'password': 'test1234'},
         headers=admin_headers,
     )
@@ -73,13 +76,13 @@ async def standard_user2_headers(async_client, admin_headers):
 
     # cleanup
     resp = await async_client.delete(
-        '/access/delete-user?username=test_user_2', headers=admin_headers
+        '/access/users/delete?username=test_user_2', headers=admin_headers
     )
     assert resp.status_code == 200
 
 
 async def get_JWT_token(async_client, user='admin', password='pytupli'):
-    r = await async_client.post('/access/token', json={'username': user, 'password': password})
+    r = await async_client.post('/access/users/token', json={'username': user, 'password': password})
     r.raise_for_status()
     return r.json()['access_token']['token']
 
@@ -199,7 +202,7 @@ def sample_benchmarks():
         Benchmark(
             id='id1',
             created_by='test_user',
-            is_public=True,
+            published_in=['global'],
             created_at=datetime.datetime.now(datetime.timezone.utc),
             hash='hash1',
             metadata=BenchmarkMetadata(
@@ -213,7 +216,7 @@ def sample_benchmarks():
         Benchmark(
             id='id2',
             created_by='test_user',
-            is_public=False,
+            published_in=[],
             created_at=datetime.datetime.now(datetime.timezone.utc),
             hash='hash2',
             metadata=BenchmarkMetadata(
@@ -227,7 +230,7 @@ def sample_benchmarks():
         Benchmark(
             id='id3',
             created_by='test_user',
-            is_public=True,
+            published_in=['global'],
             created_at=datetime.datetime.now(datetime.timezone.utc),
             hash='hash3',
             metadata=BenchmarkMetadata(
@@ -252,10 +255,17 @@ async def create_benchmark(async_client, benchmark_data, headers):
     return response, None
 
 
-async def publish_benchmark(async_client, benchmark_id, headers):
+async def publish_benchmark(async_client, benchmark_id, headers, publish_in='global'):
     """Publish a benchmark and return the response"""
     return await async_client.put(
-        f'/benchmarks/publish?benchmark_id={benchmark_id}', headers=headers
+        f'/benchmarks/publish?benchmark_id={benchmark_id}&publish_in={publish_in}', headers=headers
+    )
+
+
+async def unpublish_benchmark(async_client, benchmark_id, headers, unpublish_from='global'):
+    """Unpublish a benchmark and return the response"""
+    return await async_client.put(
+        f'/benchmarks/unpublish?benchmark_id={benchmark_id}&unpublish_from={unpublish_from}', headers=headers
     )
 
 
@@ -276,6 +286,39 @@ async def delete_benchmark(async_client, benchmark_id, headers):
     )
 
 
+# Group helper functions
+async def create_group(async_client, group_name, headers, description="Test group"):
+    """Create a group and return the response"""
+    group = Group(name=group_name, description=description)
+    return await async_client.post(
+        '/access/groups/create', json=group.model_dump(), headers=headers
+    )
+
+
+async def delete_group(async_client, headers, group_name):
+    """Delete a group and return the response"""
+    return await async_client.delete(
+        f'/access/groups/delete?group_name={group_name}', headers=headers
+    )
+
+
+async def add_user_to_group(async_client, group_name, username, headers, roles=None):
+    """Add a user to a group with specific roles"""
+    if roles is None:
+        roles = ['contributor']  # Default role
+
+    membership = GroupMembershipQuery(
+        group_name=group_name,
+        members=[GroupMembership(
+            user=username,
+            roles=roles
+        )]
+    )
+    return await async_client.post(
+        '/access/groups/add-members', json=membership.model_dump(), headers=headers
+    )
+
+
 # Episode helper functions
 async def record_episode(async_client, episode_data, headers):
     """Record an episode and return the response and episode header if successful"""
@@ -287,10 +330,17 @@ async def record_episode(async_client, episode_data, headers):
     return response, None
 
 
-async def publish_episode(async_client, episode_id, headers=None):
+async def publish_episode(async_client, episode_id, headers=None, publish_in='global'):
     """Publish an episode by ID or all episodes for a benchmark ID"""
     url = '/episodes/publish'
-    url += f'?episode_id={episode_id}'
+    url += f'?episode_id={episode_id}&publish_in={publish_in}'
+    return await async_client.put(url, headers=headers)
+
+
+async def unpublish_episode(async_client, episode_id, headers=None, unpublish_from='global'):
+    """Unpublish an episode by ID"""
+    url = '/episodes/unpublish'
+    url += f'?episode_id={episode_id}&unpublish_from={unpublish_from}'
     return await async_client.put(url, headers=headers)
 
 
@@ -463,9 +513,14 @@ async def download_artifact(async_client, artifact_id, headers=None):
     return response, None, None, None
 
 
-async def publish_artifact(async_client, artifact_id, headers):
+async def publish_artifact(async_client, artifact_id, headers, publish_in='global'):
     """Publish a artifact and return the response"""
-    return await async_client.put(f'/artifacts/publish?artifact_id={artifact_id}', headers=headers)
+    return await async_client.put(f'/artifacts/publish?artifact_id={artifact_id}&publish_in={publish_in}', headers=headers)
+
+
+async def unpublish_artifact(async_client, artifact_id, headers, unpublish_from='global'):
+    """Unpublish an artifact and return the response"""
+    return await async_client.put(f'/artifacts/unpublish?artifact_id={artifact_id}&unpublish_from={unpublish_from}', headers=headers)
 
 
 async def delete_artifact(async_client, artifact_id, headers):

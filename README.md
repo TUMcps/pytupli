@@ -68,6 +68,10 @@ poetry install --with server,docs,tests
 
 For deployment instructions, please refer to the [deployment documentation](deployment/README.md).
 
+## Access Management
+
+For a detailed guide of PyTupli's access management, please refer to the [access management documentation](RBAC_README.md).
+
 ## CLI Usage
 
 PyTupli provides a command-line interface for the TupliAPIClient. After deployment, first log in to the server and specify the URL:

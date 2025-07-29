@@ -109,6 +109,10 @@ def admin_cleanup(storage, resource_type, resource_id):
                 admin_client.delete_episode(resource_id)
             elif resource_type == 'user':
                 admin_client.delete_user(resource_id)
+            elif resource_type == 'group':
+                admin_client.delete_group(resource_id)
+            elif resource_type == 'role':
+                admin_client.delete_role(resource_id)
         except TupliStorageError as e:
             print(f'Admin cleanup failed for {resource_type} {resource_id}: {str(e)}')
     else:

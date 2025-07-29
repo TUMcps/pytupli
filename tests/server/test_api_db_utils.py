@@ -1,4 +1,4 @@
-from pytupli.schema import FilterEQ, FilterGEQ, FilterLEQ, FilterAND, FilterOR, FilterType
+from pytupli.schema import FilterEQ, FilterGEQ, FilterLEQ, FilterAND, FilterOR, FilterIN, FilterType
 import pytest
 
 from pytupli.server.db.db_handler import MongoDBHandler
@@ -64,6 +64,31 @@ def test_convert_filter_to_query():
                     {'time': {'$lte': 100}},
                 ]
             },
+        ]
+    }
+
+
+def test_in_filter():
+    # Test IN filter with array of strings
+    in_filter = FilterIN(type=FilterType.IN, key='tags', value=['urgent', 'completed', 'review'])
+    assert convert_filter_to_query(in_filter) == {'tags': {'$in': ['urgent', 'completed', 'review']}}
+
+    # Test IN filter with array of numbers
+    in_filter_numbers = FilterIN(type=FilterType.IN, key='priority', value=[1, 3, 5])
+    assert convert_filter_to_query(in_filter_numbers) == {'priority': {'$in': [1, 3, 5]}}
+
+    # Test IN filter in combination with other filters
+    combined_filter = FilterAND(
+        type=FilterType.AND,
+        filters=[
+            FilterEQ(type=FilterType.EQ, key='status', value='active'),
+            FilterIN(type=FilterType.IN, key='category', value=['backend', 'frontend', 'devops']),
+        ],
+    )
+    assert convert_filter_to_query(combined_filter) == {
+        '$and': [
+            {'status': 'active'},
+            {'category': {'$in': ['backend', 'frontend', 'devops']}},
         ]
     }
 

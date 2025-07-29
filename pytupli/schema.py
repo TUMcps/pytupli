@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import datetime
 from abc import ABC, abstractmethod
-from enum import Enum
+from enum import Enum, StrEnum, auto
 from typing import Any, Dict, List, Optional, Self
 import uuid
 import numpy as np
@@ -10,15 +10,81 @@ import numpy as np
 from pydantic import BaseModel, Field, model_validator
 
 
+class RESOURCE_TYPE(StrEnum):
+    ARTIFACT = auto()
+    BENCHMARK = auto()
+    EPISODE = auto()
+    USER = auto()
+    GROUP = auto()
+    ROLE = auto()
+
+
+class RIGHT(StrEnum):
+    """
+    Enum for defining rights in the system.
+    """
+
+    BENCHMARK_CREATE = auto()
+    BENCHMARK_READ = auto()
+    BENCHMARK_DELETE = auto()
+
+    ARTIFACT_CREATE = auto()
+    ARTIFACT_READ = auto()
+    ARTIFACT_DELETE = auto()
+
+    EPISODE_CREATE = auto()
+    EPISODE_READ = auto()
+    EPISODE_DELETE = auto()
+
+    USER_CREATE = auto()
+    USER_READ = auto()
+    USER_UPDATE = auto()
+    USER_DELETE = auto()
+
+    GROUP_CREATE = auto()
+    GROUP_READ = auto()
+    GROUP_UPDATE = auto()
+    GROUP_DELETE = auto()
+
+    ROLE_MANAGEMENT = auto()
+
+
+RIGHT_BUNDLE_CONTENT_READ = [RIGHT.ARTIFACT_READ, RIGHT.BENCHMARK_READ, RIGHT.EPISODE_READ]
+
+RIGHT_BUNDLE_CONTENT_CREATE = [RIGHT.ARTIFACT_CREATE, RIGHT.BENCHMARK_CREATE, RIGHT.EPISODE_CREATE]
+
+RIGHT_BUNDLE_CONTENT_DELETE = [RIGHT.ARTIFACT_DELETE, RIGHT.BENCHMARK_DELETE, RIGHT.EPISODE_DELETE]
+
+
+class DEFAULT_ROLE(StrEnum):
+    """
+    Enum for defining roles in the system.
+    """
+
+    ADMIN = auto()
+    CONTENT_ADMIN = auto()
+    USER_ADMIN = auto()
+    GROUP_ADMIN = auto()
+    CONTRIBUTOR = auto()
+    MEMBER = auto()
+    GLOBAL_MEMBER = auto()
+    GUEST = auto()
+
+
 class DBItem(BaseModel):
     id: str
     created_by: str
-    is_public: bool = False
+    published_in: list[str] = []
     created_at: str
 
     @classmethod
     def create_new(cls, **data) -> DBItem:
-        return cls(id=uuid.uuid4().hex, created_at=datetime.datetime.now().isoformat(), **data)
+        return cls(
+            id=uuid.uuid4().hex,
+            created_at=datetime.datetime.now().isoformat(),
+            published_in=[data.get('created_by')],
+            **data,
+        )
 
 
 class ArtifactMetadata(BaseModel):
@@ -138,6 +204,7 @@ class EpisodeItem(Episode, EpisodeHeader):
         return cls(
             id=uuid.uuid4().hex,
             created_at=datetime.datetime.now().isoformat(),
+            published_in=[data.get('created_by')],
             n_tuples=len(data['tuples']),
             terminated=data['tuples'][-1]['terminal'],
             timeout=data['tuples'][-1]['timeout'],
@@ -183,6 +250,7 @@ class FilterType(str, Enum):
     GT = 'GT'  # greater than
     LT = 'LT'  # less than
     NE = 'NE'  # not for not equal to
+    IN = 'IN'  # value is in array
     AND = 'AND'
     OR = 'OR'
 
@@ -263,6 +331,10 @@ class FilterNE(BaseFilter):
     type: FilterType = FilterType.NE
 
 
+class FilterIN(BaseFilter):
+    type: FilterType = FilterType.IN
+
+
 class FilterAND(BaseFilter):
     type: FilterType = FilterType.AND
     filters: List[BaseFilter]
@@ -293,6 +365,10 @@ class FilterOR(BaseFilter):
         )
 
 
+class EpisodesListRequest(BaseFilter):
+    include_tuples: bool = False
+
+
 ######################
 # User Management
 ######################
@@ -301,18 +377,23 @@ class FilterOR(BaseFilter):
 class User(BaseModel):
     username: str
     password: str
-    roles: list[str]
+    memberships: list[Membership] = []  # List of group memberships
+
+
+class Membership(BaseModel):
+    group: str  # Group name
+    roles: list[str]  # Roles in the group, e.g., ['member', 'admin']
 
 
 class UserOut(BaseModel):
     username: str
-    roles: list[str]
+    memberships: list[Membership] = []  # List of group memberships
 
 
 class UserRole(BaseModel):
     role: str
-    rights: list[str]
-    description: Optional[str] = None
+    rights: list[RIGHT]
+    description: str | None = None
 
 
 class Token(BaseModel):
@@ -320,13 +401,32 @@ class Token(BaseModel):
     token_type: str
 
 
-class UserCredentials(BaseModel):
+class UpdateUserQuery(BaseModel):
     username: str
+
+
+class UserCredentials(UpdateUserQuery):
     password: str = Field(
         ..., write_only=True
     )  # Write-only field hides the password in the response
 
 
-class UserRoleUpdate(BaseModel):
-    username: str
-    roles: list[str]
+class Group(BaseModel):
+    name: str
+    description: str | None = None
+
+
+class GroupMembership(BaseModel):
+    user: str
+    roles: list[str] | None = None
+
+
+class GroupMembershipQuery(BaseModel):
+    group_name: str
+    members: list[GroupMembership]
+
+
+class GroupWithMembers(BaseModel):
+    name: str
+    description: str | None = None
+    members: list[str] = []  # List of users in the group

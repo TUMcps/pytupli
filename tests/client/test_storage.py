@@ -123,7 +123,7 @@ def test_publish_benchmark(storage, sample_benchmark_stored):
     if not isinstance(storage, FileStorage):
         # Load the benchmark and check its public status
         loaded_benchmark = storage.load_benchmark(benchmark_id)
-        assert loaded_benchmark.is_public, 'Benchmark was not published successfully'
+        assert 'global' in loaded_benchmark.published_in, 'Benchmark was not published successfully'
 
 
 # Artifact Tests
@@ -222,7 +222,7 @@ def test_publish_artifact(storage, sample_artifact_stored):
     if not isinstance(storage, FileStorage):
         artifact_list = storage.list_artifacts(filter=FilterEQ(key='id', value=artifact_id))
         assert len(artifact_list) == 1, "Couldn't find the published artifact"
-        assert artifact_list[0].is_public, 'Artifact was not published successfully'
+        assert 'global' in artifact_list[0].published_in, 'Artifact was not published successfully'
 
 
 # Episode Tests
@@ -343,9 +343,99 @@ def test_publish_episode(storage, sample_episode_stored):
         episode_filter = FilterEQ(key='id', value=episode_id)
         episode_list = storage.list_episodes(filter=episode_filter)
         if len(episode_list) > 0:
-            # Only assert if we can actually get the episode's public status
-            if hasattr(episode_list[0], 'is_public'):
-                assert episode_list[0].is_public, 'Episode was not published successfully'
+            # Only assert if we can actually get the episode's published status
+            if hasattr(episode_list[0], 'published_in'):
+                assert 'global' in episode_list[0].published_in, 'Episode was not published successfully'
+
+
+@pytest.mark.parametrize('storage', STORAGE_TYPES, indirect=True)
+def test_unpublish_benchmark(storage, sample_benchmark_stored):
+    """Test unpublishing a benchmark."""
+    benchmark_id = sample_benchmark_stored
+
+    # First publish the benchmark to have something to unpublish
+    storage.publish_benchmark(benchmark_id)
+
+    # Execute unpublish_benchmark - we only test that the method exists and runs
+    if not isinstance(storage, FileStorage):
+        try:
+            storage.unpublish_benchmark(benchmark_id, 'global')
+            # If successful, verify the benchmark is no longer in the global group
+            loaded_benchmark = storage.load_benchmark(benchmark_id)
+            assert 'global' not in loaded_benchmark.published_in, 'Benchmark was not unpublished successfully'
+        except TupliStorageError as e:
+            # Permission errors are expected for non-admin users trying to unpublish from global
+            # The important thing is that the method exists and makes the correct API call
+            if 'Forbidden' in str(e) or '403' in str(e):
+                pass  # Expected for users without unpublish permissions
+            else:
+                raise  # Re-raise unexpected errors
+
+
+@pytest.mark.parametrize('storage', STORAGE_TYPES, indirect=True)
+def test_unpublish_artifact(storage, sample_artifact_stored):
+    """Test unpublishing an artifact."""
+    artifact_id = sample_artifact_stored
+
+    # First publish the artifact to have something to unpublish
+    storage.publish_artifact(artifact_id)
+
+    # Execute unpublish_artifact - we only test that the method exists and runs
+    if not isinstance(storage, FileStorage):
+        try:
+            storage.unpublish_artifact(artifact_id, 'global')
+            # If successful, verify the artifact is no longer in the global group
+            artifact_list = storage.list_artifacts(filter=FilterEQ(key='id', value=artifact_id))
+            assert len(artifact_list) == 1, "Couldn't find the artifact"
+            assert 'global' not in artifact_list[0].published_in, 'Artifact was not unpublished successfully'
+        except TupliStorageError as e:
+            # Permission errors are expected for non-admin users trying to unpublish from global
+            if 'Forbidden' in str(e) or '403' in str(e):
+                pass  # Expected for users without unpublish permissions
+            else:
+                raise  # Re-raise unexpected errors
+
+
+@pytest.mark.parametrize('storage', STORAGE_TYPES, indirect=True)
+def test_unpublish_episode(storage, sample_episode_stored):
+    """Test unpublishing an episode."""
+    episode_id = sample_episode_stored
+
+    # First publish the benchmark and episode to have something to unpublish
+    episode_list = storage.list_episodes(include_tuples=False)
+    benchmark_id = None
+
+    # Find our specific episode to get its benchmark ID
+    for episode in episode_list:
+        if (
+            isinstance(storage, FileStorage)
+            and episode.id == episode_id.split('/')[-1].replace('episode_', '').replace('.json', '')
+        ) or (not isinstance(storage, FileStorage) and episode.id == episode_id):
+            benchmark_id = episode.benchmark_id
+            # Publish the benchmark first
+            storage.publish_benchmark(benchmark_id)
+            break
+
+    assert benchmark_id is not None, "Couldn't find benchmark ID for the episode"
+
+    # Publish the episode
+    storage.publish_episode(episode_id)
+
+    # Execute unpublish_episode - we only test that the method exists and runs
+    if not isinstance(storage, FileStorage):
+        try:
+            storage.unpublish_episode(episode_id, 'global')
+            # If successful, verify the episode is no longer in the global group
+            episode_filter = FilterEQ(key='id', value=episode_id)
+            episode_list = storage.list_episodes(filter=episode_filter)
+            if len(episode_list) > 0 and hasattr(episode_list[0], 'published_in'):
+                assert 'global' not in episode_list[0].published_in, 'Episode was not unpublished successfully'
+        except TupliStorageError as e:
+            # Permission errors are expected for non-admin users trying to unpublish from global
+            if 'Forbidden' in str(e) or '403' in str(e):
+                pass  # Expected for users without unpublish permissions
+            else:
+                raise  # Re-raise unexpected errors
 
 
 @pytest.mark.parametrize('storage', STORAGE_TYPES, indirect=True)

@@ -27,6 +27,9 @@ from pytupli.schema import (
     EpisodeHeader,
     EpisodeItem,
     FilterType,
+    Group,
+    GroupMembershipQuery,
+    GroupWithMembers,
 )
 
 # Set up logger
@@ -152,12 +155,13 @@ class TupliStorage:
         """
         raise NotImplementedError
 
-    def publish_episode(self, uri: str) -> None:
+    def publish_episode(self, uri: str, publish_in: str = 'global') -> None:
         """
         Publishes the specified episode in the storage.
 
         Args:
             uri (str): The URI/ID of the episode to publish.
+            publish_in (str): The group to publish the episode in. Defaults to 'global'.
         """
         raise NotImplementedError
 
@@ -191,7 +195,7 @@ class TupliAPIClient(TupliStorage):
     Class for storing StorableObjects in the API.
 
     This class provides methods for interacting with the Tupli API, including user management,
-    benchmark operations, artifact handling, and episode management.
+    group management, role management, benchmark operations, artifact handling, and episode management.
 
     Methods:
         User Management:
@@ -201,14 +205,32 @@ class TupliAPIClient(TupliStorage):
                 Authenticates with the API and stores access tokens.
             list_users() -> list[User]
                 Lists all users.
-            list_roles() -> list[UserRole]
-                Lists all available user roles.
             change_password(username: str, new_password: str) -> None
                 Changes a user's password.
-            change_roles(username: str, roles: list[str]) -> None
-                Changes a user's roles.
             delete_user(username: str) -> None
                 Deletes a user and their content.
+
+        Group Management:
+            create_group(group: Group) -> Group
+                Creates a new group.
+            list_groups() -> list[Group]
+                Lists all groups accessible to the current user.
+            read_group(group_name: str) -> GroupWithMembers
+                Reads a specific group with its members.
+            delete_group(group_name: str) -> None
+                Deletes a group.
+            add_group_members(group_membership_query: GroupMembershipQuery) -> GroupWithMembers
+                Adds members to a group with specified roles.
+            remove_group_members(group_membership_query: GroupMembershipQuery) -> GroupWithMembers
+                Removes members from a group.
+
+        Role Management:
+            list_roles() -> list[UserRole]
+                Lists all available user roles.
+            create_role(role: UserRole) -> UserRole
+                Creates a new role.
+            delete_role(role_name: str) -> None
+                Deletes a role.
 
         Benchmark Operations:
             store_benchmark(benchmark_query: BenchmarkQuery) -> BenchmarkHeader
@@ -291,7 +313,7 @@ class TupliAPIClient(TupliStorage):
 
         try:
             response = requests.post(
-                f'{self.base_url}/access/refresh-token',
+                f'{self.base_url}/access/users/refresh-token',
                 headers={'Authorization': f'Bearer {refresh_token}'},
             )
             response.raise_for_status()
@@ -375,14 +397,14 @@ class TupliAPIClient(TupliStorage):
         try:  # first try authenticated request
             response = self._authenticated_request(
                 'post',
-                f'{self.base_url}/access/signup',
+                f'{self.base_url}/access/users/create',
                 json={'username': username, 'password': password},
             )
             return UserOut(**response.json())
         except TupliStorageError:  # if that fails, try unauthenticated request
             try:
                 response = requests.post(
-                    f'{self.base_url}/access/signup',
+                    f'{self.base_url}/access/users/create',
                     json={'username': username, 'password': password},
                 )
                 response.raise_for_status()
@@ -407,7 +429,7 @@ class TupliAPIClient(TupliStorage):
 
         try:
             response = requests.post(
-                f'{self.base_url}/access/token',
+                f'{self.base_url}/access/users/token',
                 json={'username': username, 'password': password},
             )
             response.raise_for_status()
@@ -429,7 +451,7 @@ class TupliAPIClient(TupliStorage):
         Returns:
             list[User]: A list of all users
         """
-        response = self._authenticated_request('get', f'{self.base_url}/access/list-users')
+        response = self._authenticated_request('get', f'{self.base_url}/access/users/list')
         return [UserOut(**user) for user in response.json()]
 
     def list_roles(self) -> list[UserRole]:
@@ -439,7 +461,7 @@ class TupliAPIClient(TupliStorage):
         Returns:
             list[UserRole]: A list of all user roles
         """
-        response = self._authenticated_request('get', f'{self.base_url}/access/list-roles')
+        response = self._authenticated_request('get', f'{self.base_url}/access/roles/list')
         return [UserRole(**role) for role in response.json()]
 
     def change_password(self, username: str, new_password: str) -> None:
@@ -452,23 +474,8 @@ class TupliAPIClient(TupliStorage):
         """
         _ = self._authenticated_request(
             'put',
-            f'{self.base_url}/access/change-password',
+            f'{self.base_url}/access/users/change-password',
             json={'username': username, 'password': new_password},
-        )
-
-    def change_roles(self, username: str, roles: list[str]) -> None:
-        """
-        Changes a user's roles.
-
-        Args:
-            username (str): The username of the account to change
-            roles (list[str]): The list of new roles
-
-        """
-        _ = self._authenticated_request(
-            'put',
-            f'{self.base_url}/access/change-roles',
-            json={'username': username, 'roles': roles},
         )
 
     def delete_user(self, username: str) -> None:
@@ -479,7 +486,126 @@ class TupliAPIClient(TupliStorage):
             username (str): The username of the account to delete
         """
         self._authenticated_request(
-            'delete', f'{self.base_url}/access/delete-user', params={'username': username}
+            'delete', f'{self.base_url}/access/users/delete', params={'username': username}
+        )
+
+    # Group management methods
+    def create_group(self, group: Group) -> Group:
+        """
+        Creates a new group.
+
+        Args:
+            group (Group): The group to create
+
+        Returns:
+            Group: The created group object
+        """
+        response = self._authenticated_request(
+            'post',
+            f'{self.base_url}/access/groups/create',
+            json=group.model_dump(),
+        )
+        return Group(**response.json())
+
+    def list_groups(self) -> list[Group]:
+        """
+        Lists all groups accessible to the current user.
+
+        Returns:
+            list[Group]: A list of groups
+        """
+        response = self._authenticated_request('get', f'{self.base_url}/access/groups/list')
+        return [Group(**group) for group in response.json()]
+
+    def read_group(self, group_name: str) -> GroupWithMembers:
+        """
+        Reads a specific group with its members.
+
+        Args:
+            group_name (str): The name of the group to read
+
+        Returns:
+            GroupWithMembers: The group with its members
+        """
+        response = self._authenticated_request(
+            'get', f'{self.base_url}/access/groups/read', params={'group_name': group_name}
+        )
+        return GroupWithMembers(**response.json())
+
+    def delete_group(self, group_name: str) -> None:
+        """
+        Deletes a group.
+
+        Args:
+            group_name (str): The name of the group to delete
+        """
+        self._authenticated_request(
+            'delete', f'{self.base_url}/access/groups/delete', params={'group_name': group_name}
+        )
+
+    def add_group_members(self, group_membership_query: GroupMembershipQuery) -> GroupWithMembers:
+        """
+        Adds members to a group with specified roles.
+
+        Args:
+            group_membership_query (GroupMembershipQuery): The membership query specifying group and members
+
+        Returns:
+            GroupWithMembers: The updated group with members
+        """
+        response = self._authenticated_request(
+            'post',
+            f'{self.base_url}/access/groups/add-members',
+            json=group_membership_query.model_dump(),
+        )
+        return GroupWithMembers(**response.json())
+
+    def remove_group_members(
+        self, group_membership_query: GroupMembershipQuery
+    ) -> GroupWithMembers:
+        """
+        Removes members from a group.
+
+        Args:
+            group_membership_query (GroupMembershipQuery): The membership query specifying group and members
+
+        Returns:
+            GroupWithMembers: The updated group with members
+        """
+        response = self._authenticated_request(
+            'post',
+            f'{self.base_url}/access/groups/remove-members',
+            json=group_membership_query.model_dump(),
+        )
+        return GroupWithMembers(**response.json())
+
+    # Role management methods
+    def create_role(self, role: UserRole) -> UserRole:
+        """
+        Creates a new role.
+
+        Args:
+            role (UserRole): The role to create
+
+        Returns:
+            UserRole: The created role object
+        """
+        response = self._authenticated_request(
+            'post',
+            f'{self.base_url}/access/roles/create',
+            json=role.model_dump(),
+        )
+        return UserRole(**response.json())
+
+    def delete_role(self, role_name: str) -> None:
+        """
+        Deletes a role.
+
+        Args:
+            role_name (str): The name of the role to delete
+        """
+        self._authenticated_request(
+            'delete', f'{self.base_url}/access/roles/delete', params={'role_name': role_name}
         )
 
     def store_benchmark(self, benchmark_query: BenchmarkQuery) -> BenchmarkHeader:
@@ -546,14 +672,17 @@ class TupliAPIClient(TupliStorage):
         )
         return response.content
 
-    def publish_benchmark(self, uri: str) -> None:
+    def publish_benchmark(self, uri: str, publish_in: str = 'global') -> None:
         """
         Publishes the benchmark in the API.
 
         Args:
             uri (str): The hash of the benchmark to be published.
+            publish_in (str): The group to publish the benchmark in. Defaults to 'global'.
         """
-        self._authenticated_request('put', f'{self.base_url}/benchmarks/publish?benchmark_id={uri}')
+        self._authenticated_request(
+            'put', f'{self.base_url}/benchmarks/publish?benchmark_id={uri}&publish_in={publish_in}'
+        )
 
     def delete_benchmark(self, uri: str) -> None:
         """
@@ -575,14 +704,17 @@ class TupliAPIClient(TupliStorage):
         """
         self._authenticated_request('delete', f'{self.base_url}/artifacts/delete?artifact_id={uri}')
 
-    def publish_artifact(self, uri: str) -> None:
+    def publish_artifact(self, uri: str, publish_in: str = 'global') -> None:
         """
         Publishes the artifact in the API.
 
         Args:
             uri (str): The hash of the artifact to be published.
+            publish_in (str): The group to publish the artifact in. Defaults to 'global'.
         """
-        self._authenticated_request('put', f'{self.base_url}/artifacts/publish?artifact_id={uri}')
+        self._authenticated_request(
+            'put', f'{self.base_url}/artifacts/publish?artifact_id={uri}&publish_in={publish_in}'
+        )
 
     def list_benchmarks(self, filter: BaseFilter = None) -> list[BenchmarkHeader]:
         """
@@ -637,16 +769,17 @@ class TupliAPIClient(TupliStorage):
         episode_data = response.json()
         return EpisodeHeader(**episode_data)
 
-    def publish_episode(self, uri: str) -> None:
+    def publish_episode(self, uri: str, publish_in: str = 'global') -> None:
         """
         Publishes an episode in the API.
 
         Args:
             uri (str): The ID of the episode to publish.
+            publish_in (str): The group to publish the episode in. Defaults to 'global'.
         """
         self._authenticated_request(
             'put',
-            f'{self.base_url}/episodes/publish?episode_id={uri}',
+            f'{self.base_url}/episodes/publish?episode_id={uri}&publish_in={publish_in}',
         )
 
     def list_episodes(
@@ -688,6 +821,45 @@ class TupliAPIClient(TupliStorage):
         self._authenticated_request(
             'delete',
             f'{self.base_url}/episodes/delete?episode_id={uri}',
+        )
+
+    def unpublish_benchmark(self, uri: str, unpublish_from: str) -> None:
+        """
+        Unpublishes a benchmark from the specified group.
+
+        Args:
+            uri (str): The ID of the benchmark to unpublish.
+            unpublish_from (str): The group to unpublish the benchmark from.
+        """
+        self._authenticated_request(
+            'put',
+            f'{self.base_url}/benchmarks/unpublish?benchmark_id={uri}&unpublish_from={unpublish_from}',
+        )
+
+    def unpublish_artifact(self, uri: str, unpublish_from: str) -> None:
+        """
+        Unpublishes an artifact from the specified group.
+
+        Args:
+            uri (str): The ID of the artifact to unpublish.
+            unpublish_from (str): The group to unpublish the artifact from.
+        """
+        self._authenticated_request(
+            'put',
+            f'{self.base_url}/artifacts/unpublish?artifact_id={uri}&unpublish_from={unpublish_from}',
+        )
+
+    def unpublish_episode(self, uri: str, unpublish_from: str) -> None:
+        """
+        Unpublishes an episode from the specified group.
+
+        Args:
+            uri (str): The ID of the episode to unpublish.
+            unpublish_from (str): The group to unpublish the episode from.
+        """
+        self._authenticated_request(
+            'put',
+            f'{self.base_url}/episodes/unpublish?episode_id={uri}&unpublish_from={unpublish_from}',
         )
 
 
@@ -1114,26 +1286,28 @@ class FileStorage(TupliStorage):
         except Exception as e:
             raise TupliStorageError(f'Failed to delete artifact {uri}: {str(e)}')
 
-    def publish_benchmark(self, uri: str) -> None:
+    def publish_benchmark(self, uri: str, publish_in: str = 'global') -> None:
         """
         Publishing functionality is not available in FileStorage.
         This is a placeholder to implement the interface.
 
         Args:
             uri (str): The URI of the benchmark to publish.
+            publish_in (str): The group to publish the benchmark in. Defaults to 'global'.
 
         Returns:
             str: The URI of the benchmark.
         """
         logger.info('Publishing functionality is not available in FileStorage')
 
-    def publish_artifact(self, uri: str) -> None:
+    def publish_artifact(self, uri: str, publish_in: str = 'global') -> None:
         """
         Publishing functionality is not available in FileStorage.
         This is a placeholder to implement the interface.
 
         Args:
             uri (str): The URI of the artifact to publish.
+            publish_in (str): The group to publish the artifact in. Defaults to 'global'.
         """
         logger.info('Publishing functionality is not available in FileStorage')
 
@@ -1211,12 +1385,13 @@ class FileStorage(TupliStorage):
             **{k: v for k, v in episode_item.model_dump().items() if k != 'tuples'}
         )
 
-    def publish_episode(self, uri: str) -> None:
+    def publish_episode(self, uri: str, publish_in: str = 'global') -> None:
         """
-        Sets the is_public flag of an episode to True in local file storage.
+        Publishes an episode in the specified group in local file storage.
         This is a placeholder to implement the interface.
         Args:
             uri (str): The ID of the episode to publish.
+            publish_in (str): The group to publish the episode in. Defaults to 'global'.
         """
         logger.info('Publishing functionality is not available in FileStorage')
 
