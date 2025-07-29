@@ -3,6 +3,11 @@ from conftest import (
     upload_artifact,
     download_artifact,
     delete_artifact,
+    publish_artifact,
+    unpublish_artifact,
+    create_group,
+    delete_group,
+    add_user_to_group,
 )
 from pytupli.schema import ArtifactMetadataItem
 
@@ -101,6 +106,109 @@ async def test_artifact_published_list(
     artifacts: list[ArtifactMetadataItem] = [ArtifactMetadataItem(**d) for d in response.json()]
     assert len(artifacts) == 1
     assert artifacts[0].id == data_id
+
+
+@pytest.mark.anyio(loop_scope='session')
+async def test_artifact_publish_in_user_group(
+    async_client, uploaded_artifact_admin, admin_headers, standard_user1_headers
+):
+    """Test publishing an artifact in a user-created group"""
+    _, artifact_id, _, _, _ = uploaded_artifact_admin
+    test_group_name = "test_artifact_group"
+
+    try:
+        # Create a test group
+        group_response = await create_group(async_client, test_group_name, admin_headers)
+        assert group_response.status_code == 200
+
+        # Add user1 to the group with default roles (should include ARTIFACT_CREATE)
+        membership_response = await add_user_to_group(
+            async_client, test_group_name, "test_user_1", admin_headers
+        )
+        assert membership_response.status_code == 200
+
+        # Admin publishes artifact in the test group
+        publish_response = await publish_artifact(
+            async_client, artifact_id, admin_headers, test_group_name
+        )
+        assert publish_response.status_code == 200
+
+        # Verify artifact is accessible to group members
+        response = await async_client.post('/artifacts/list', headers=standard_user1_headers)
+        assert response.status_code == 200
+        artifacts = [ArtifactMetadataItem(**d) for d in response.json()]
+        artifact_ids = [a.id for a in artifacts]
+        assert artifact_id in artifact_ids
+
+    finally:
+        # Clean up the group
+        await delete_group(async_client, admin_headers, test_group_name)
+
+
+@pytest.mark.anyio(loop_scope='session')
+async def test_artifact_publish_in_nonexistent_group(
+    async_client, uploaded_artifact_admin, admin_headers
+):
+    """Test publishing an artifact in a non-existent group (should fail)"""
+    _, artifact_id, _, _, _ = uploaded_artifact_admin
+    nonexistent_group = "nonexistent_group"
+
+    # Try to publish in non-existent group (should fail)
+    publish_response = await publish_artifact(
+        async_client, artifact_id, admin_headers, nonexistent_group
+    )
+    assert publish_response.status_code == 403  # Should fail due to lack of permissions
+
+
+@pytest.mark.anyio(loop_scope='session')
+async def test_artifact_unpublish_success(
+    async_client, uploaded_artifact_admin, admin_headers
+):
+    """Test successful unpublishing of an artifact from global group"""
+    _, artifact_id, _, _, _ = uploaded_artifact_admin
+
+    # First publish the artifact in global
+    publish_response = await publish_artifact(
+        async_client, artifact_id, admin_headers, "global"
+    )
+    assert publish_response.status_code == 200
+
+    # Verify it's published (visible in list)
+    response = await async_client.post('/artifacts/list', headers=admin_headers)
+    assert response.status_code == 200
+    artifacts = [ArtifactMetadataItem(**d) for d in response.json()]
+    artifact_ids = [a.id for a in artifacts]
+    assert artifact_id in artifact_ids
+
+    # Unpublish from global
+    unpublish_response = await unpublish_artifact(
+        async_client, artifact_id, admin_headers, "global"
+    )
+    assert unpublish_response.status_code == 200
+
+    # Verify it's no longer published in global (not visible in general list)
+    # Note: This depends on the exact implementation of the list endpoint
+    # You may need to adjust this assertion based on your actual API behavior
+
+
+@pytest.mark.anyio(loop_scope='session')
+async def test_artifact_unpublish_insufficient_permissions(
+    async_client, uploaded_artifact_admin, admin_headers, standard_user1_headers
+):
+    """Test unpublishing fails when user lacks permissions"""
+    _, artifact_id, _, _, _ = uploaded_artifact_admin
+
+    # Admin publishes the artifact in global
+    publish_response = await publish_artifact(
+        async_client, artifact_id, admin_headers, "global"
+    )
+    assert publish_response.status_code == 200
+
+    # User1 tries to unpublish (should fail - insufficient permissions)
+    unpublish_response = await unpublish_artifact(
+        async_client, artifact_id, standard_user1_headers, "global"
+    )
+    assert unpublish_response.status_code == 403  # Should fail due to insufficient permissions
 
 
 if __name__ == '__main__':

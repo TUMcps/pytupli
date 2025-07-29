@@ -7,7 +7,7 @@ from fastapi import FastAPI
 from pytupli.server.api.routes import api_router
 from pytupli.server.config import DBHandlerFactory
 from pytupli.server.management.roles import initialize_database
-from pytupli.server.management.security import initialize_secret_key
+from pytupli.server.management.authorization import initialize_secret_key
 
 
 @asynccontextmanager

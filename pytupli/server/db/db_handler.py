@@ -28,6 +28,7 @@ class MongoDBHandler:
             - FilterType.GT: Greater than filter.
             - FilterType.LT: Less than filter.
             - FilterType.NE: Not equal filter
+            - FilterType.IN: Value is in array filter
         """
 
         match filter_obj.type:
@@ -62,6 +63,9 @@ class MongoDBHandler:
 
             case FilterType.NE:
                 return {filter_obj.key: {'$ne': filter_obj.value}}
+
+            case FilterType.IN:
+                return {filter_obj.key: {'$in': filter_obj.value}}
 
         return {}
 
