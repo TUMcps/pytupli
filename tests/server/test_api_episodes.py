@@ -13,8 +13,9 @@ from conftest import (
     add_user_to_group,
 )
 
+pytestmark = pytest.mark.anyio
 
-@pytest.mark.anyio(loop_scope='session')
+
 async def test_episodes_record(async_client, sample_episode, admin_headers):
     """Test recording an episode with admin user"""
     response, episode = await record_episode(async_client, sample_episode, admin_headers)
@@ -33,7 +34,7 @@ async def test_episodes_record(async_client, sample_episode, admin_headers):
     assert delete_response.status_code == 200
 
 
-@pytest.mark.anyio(loop_scope='session')
+
 async def test_episodes_record_nonexistent_benchmark(async_client, sample_episode, admin_headers):
     """Test recording an episode for a nonexistent benchmark"""
     # Modify the benchmark_id to something that doesn't exist
@@ -43,7 +44,7 @@ async def test_episodes_record_nonexistent_benchmark(async_client, sample_episod
     assert response.status_code == 404
 
 
-@pytest.mark.anyio(loop_scope='session')
+
 async def test_episodes_record_private_benchmark_other_user(
     async_client, sample_episode, standard_user2_headers, created_benchmark_user1
 ):
@@ -61,14 +62,14 @@ async def test_episodes_record_private_benchmark_other_user(
     await delete_episode(async_client, episode_id=episode.id, headers=standard_user2_headers)
 
 
-@pytest.mark.anyio(loop_scope='session')
+
 async def test_episodes_record_guest_user(async_client, sample_episode):
     """Test recording episodes as a guest user (unauthorized)"""
     response, _ = await record_episode(async_client, sample_episode, headers=None)
     assert response.status_code == 403  # Forbidden (no authentication)
 
 
-@pytest.mark.anyio(loop_scope='session')
+
 async def test_episodes_publish_by_episode_id(async_client, admin_headers, recorded_episode_admin):
     """Test publishing an episode by episode_id"""
 
@@ -84,7 +85,7 @@ async def test_episodes_publish_by_episode_id(async_client, admin_headers, recor
     assert any(ep.id == episode.id and 'global' in ep.published_in for ep in episodes)
 
 
-@pytest.mark.anyio(loop_scope='session')
+
 async def test_episodes_publish_not_allowed(
     async_client, standard_user2_headers, recorded_episode_admin
 ):
@@ -99,7 +100,7 @@ async def test_episodes_publish_not_allowed(
     assert pub_response.status_code == 403
 
 
-@pytest.mark.anyio(loop_scope='session')
+
 async def test_episodes_publish_nonexistent_episode(async_client, admin_headers):
     """Test publishing a nonexistent episode"""
     response = await publish_episode(
@@ -108,7 +109,7 @@ async def test_episodes_publish_nonexistent_episode(async_client, admin_headers)
     assert response.status_code == 404
 
 
-@pytest.mark.anyio(loop_scope='session')
+
 async def test_episodes_delete_by_episode_id(
     async_client, sample_episode, admin_headers, recorded_episode_admin
 ):
@@ -126,7 +127,7 @@ async def test_episodes_delete_by_episode_id(
     assert not any(ep.id == episode.id for ep in episodes)
 
 
-@pytest.mark.anyio(loop_scope='session')
+
 async def test_episodes_delete_other_users_episode(
     async_client, recorded_episode_user1, standard_user2_headers
 ):
@@ -141,7 +142,7 @@ async def test_episodes_delete_other_users_episode(
     assert delete_resp.status_code == 403  # Forbidden
 
 
-@pytest.mark.anyio(loop_scope='session')
+
 async def test_episodes_delete_guest_user(async_client, recorded_episode_admin):
     """Test deleting episodes as a guest user (unauthorized)"""
     # Get recorded episode from fixture
@@ -152,7 +153,7 @@ async def test_episodes_delete_guest_user(async_client, recorded_episode_admin):
     assert delete_resp.status_code == 403  # Forbidden (no authentication)
 
 
-@pytest.mark.anyio(loop_scope='session')
+
 async def test_episodes_delete_admin_can_delete_any_episode(
     async_client, admin_headers, recorded_episode_user1
 ):
@@ -172,7 +173,7 @@ async def test_episodes_delete_admin_can_delete_any_episode(
     assert not any(ep.id == user1_episode.id for ep in episodes)
 
 
-@pytest.mark.anyio(loop_scope='session')
+
 async def test_episodes_list(
     async_client, standard_user1_headers, published_episode_admin, recorded_episode_user1
 ):
@@ -189,7 +190,7 @@ async def test_episodes_list(
     assert episode2.id in [ep.id for ep in episodes]
 
 
-@pytest.mark.anyio(loop_scope='session')
+
 async def test_episodes_list_with_filter(async_client, admin_headers, recorded_episode_admin):
     """Test listing episodes with a filter"""
     # Get recorded episode from fixture
@@ -207,7 +208,7 @@ async def test_episodes_list_with_filter(async_client, admin_headers, recorded_e
     assert filtered_episodes[0].id == episode.id
 
 
-@pytest.mark.anyio(loop_scope='session')
+
 async def test_episodes_list_with_tuples(async_client, admin_headers, recorded_episode_admin):
     """Test listing episodes with tuples included"""
     # Get recorded episode from fixture
@@ -233,7 +234,7 @@ async def test_episodes_list_with_tuples(async_client, admin_headers, recorded_e
     assert isinstance(recorded_episode.tuples[0].reward, float)
 
 
-@pytest.mark.anyio(loop_scope='session')
+
 async def test_episodes_list_visibility(
     async_client,
     standard_user1_headers,
@@ -263,7 +264,7 @@ async def test_episodes_list_visibility(
     assert user1_episode.id not in [ep.id for ep in episodes_user2]
 
 
-@pytest.mark.anyio(loop_scope='session')
+
 async def test_episode_publish_in_user_group(async_client, admin_headers, standard_user1_headers, recorded_episode_admin):
     """Test publishing an episode in a user-created group"""
     # Get recorded episode from fixture
@@ -292,7 +293,7 @@ async def test_episode_publish_in_user_group(async_client, admin_headers, standa
     assert delete_group_response.status_code == 200
 
 
-@pytest.mark.anyio(loop_scope='session')
+
 async def test_episode_publish_in_nonexistent_group(async_client, admin_headers, recorded_episode_admin):
     """Test publishing an episode in a non-existent group (should fail)"""
     # Get recorded episode from fixture
@@ -304,7 +305,7 @@ async def test_episode_publish_in_nonexistent_group(async_client, admin_headers,
     assert 'Insufficient permissions' in publish_response.text
 
 
-@pytest.mark.anyio(loop_scope='session')
+
 async def test_episode_unpublish_success(async_client, admin_headers, standard_user2_headers, published_episode_admin):
     """Test unpublishing an episode successfully"""
     # Get published episode from fixture
@@ -321,7 +322,7 @@ async def test_episode_unpublish_success(async_client, admin_headers, standard_u
     assert episode.id not in [ep.id for ep in episodes]
 
 
-@pytest.mark.anyio(loop_scope='session')
+
 async def test_episode_unpublish_insufficient_permissions(async_client, standard_user2_headers, published_episode_admin):
     """Test unpublishing an episode without sufficient permissions (should fail)"""
     # Get published episode from fixture (owned by admin)

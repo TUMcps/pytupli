@@ -24,6 +24,7 @@ import io
 import hashlib
 import datetime
 
+pytestmark = pytest.mark.anyio
 
 @pytest.fixture(scope='session')  # fixture to configure asyncio in pytest
 def anyio_backend():

@@ -154,8 +154,9 @@ class TupliDataset:
         storage (TupliStorage): The storage backend to fetch data from.
     """
 
-    def __init__(self, storage: TupliStorage):
+    def __init__(self, storage: TupliStorage, info: dict = {}):
         self.storage = storage
+        self.info = info
 
         self._benchmark_filter: BaseFilter = None
         self._episode_filter: BaseFilter = None

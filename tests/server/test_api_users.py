@@ -1,16 +1,17 @@
 import pytest
 from conftest import get_JWT_token
 
+pytestmark = pytest.mark.anyio
 
-@pytest.mark.anyio(loop_scope='session')
+
 async def test_root(async_client):
     response = await async_client.get('/')
     assert response.status_code == 200
 
 
-# === TOKEN CREATION TESTS (Working well) ===
+# === TOKEN CREATION TESTS ===
 
-@pytest.mark.anyio(loop_scope='session')
+
 async def test_token_creation_success(async_client):
     """Test successful token creation with valid credentials."""
     response = await async_client.post(
@@ -28,7 +29,7 @@ async def test_token_creation_success(async_client):
     assert len(token_data['refresh_token']['token']) > 0
 
 
-@pytest.mark.anyio(loop_scope='session')
+
 async def test_token_creation_wrong_password(async_client):
     """Test token creation fails with wrong password."""
     response = await async_client.post(
@@ -39,7 +40,7 @@ async def test_token_creation_wrong_password(async_client):
     assert 'Incorrect username or password' in response.json()['detail']
 
 
-@pytest.mark.anyio(loop_scope='session')
+
 async def test_token_creation_nonexistent_user(async_client):
     """Test token creation fails with non-existent user."""
     response = await async_client.post(
@@ -50,7 +51,7 @@ async def test_token_creation_nonexistent_user(async_client):
     assert 'Incorrect username or password' in response.json()['detail']
 
 
-@pytest.mark.anyio(loop_scope='session')
+
 async def test_token_creation_empty_credentials(async_client):
     """Test token creation fails with empty credentials."""
     response = await async_client.post(
@@ -62,7 +63,7 @@ async def test_token_creation_empty_credentials(async_client):
 
 # === DATA VALIDATION TESTS ===
 
-@pytest.mark.anyio(loop_scope='session')
+
 async def test_empty_request_bodies(async_client):
     """Test endpoints handle empty request bodies gracefully."""
     # Test token creation with empty body
@@ -75,7 +76,7 @@ async def test_empty_request_bodies(async_client):
 
 # === USER CREATION TESTS (Now working with server running) ===
 
-@pytest.mark.anyio(loop_scope='session')
+
 async def test_user_creation_success(async_client, admin_headers):
     """Test successful user creation with admin privileges."""
     username = 'test_user_creation_success'
@@ -100,7 +101,7 @@ async def test_user_creation_success(async_client, admin_headers):
     assert cleanup.status_code == 200
 
 
-@pytest.mark.anyio(loop_scope='session')
+
 async def test_user_creation_duplicate_username(async_client, admin_headers):
     """Test user creation fails when username already exists."""
     username = 'test_duplicate_user'
@@ -131,7 +132,7 @@ async def test_user_creation_duplicate_username(async_client, admin_headers):
 
 # === USER LISTING TESTS ===
 
-@pytest.mark.anyio(loop_scope='session')
+
 async def test_user_listing_success(async_client, admin_headers):
     """Test successful user listing with admin privileges."""
     response = await async_client.get('/access/users/list', headers=admin_headers)
@@ -150,7 +151,7 @@ async def test_user_listing_success(async_client, admin_headers):
         assert 'password' not in user  # Password should never be returned
 
 
-@pytest.mark.anyio(loop_scope='session')
+
 async def test_user_listing_no_auth(async_client):
     """Test user listing fails without authentication."""
     response = await async_client.get('/access/users/list')
@@ -159,7 +160,7 @@ async def test_user_listing_no_auth(async_client):
 
 # === USER DELETION TESTS ===
 
-@pytest.mark.anyio(loop_scope='session')
+
 async def test_user_deletion_success(async_client, admin_headers):
     """Test successful user deletion with admin privileges."""
     username = 'test_user_deletion_success'
@@ -183,14 +184,14 @@ async def test_user_deletion_success(async_client, admin_headers):
     assert username not in usernames
 
 
-@pytest.mark.anyio(loop_scope='session')
+
 async def test_user_deletion_nonexistent(async_client, admin_headers):
     """Test deletion of non-existent user returns success (idempotent)."""
     response = await async_client.delete('/access/users/delete?username=nonexistent_user_12345', headers=admin_headers)
     assert response.status_code == 200
 
 
-@pytest.mark.anyio(loop_scope='session')
+
 async def test_user_deletion_no_auth(async_client):
     """Test user deletion fails without authentication."""
     response = await async_client.delete('/access/users/delete?username=admin')
@@ -199,7 +200,7 @@ async def test_user_deletion_no_auth(async_client):
 
 # === PASSWORD CHANGE TESTS ===
 
-@pytest.mark.anyio(loop_scope='session')
+
 async def test_change_password_success(async_client, admin_headers):
     """Test successful password change with admin privileges."""
     username = 'test_change_password_user'
@@ -245,7 +246,7 @@ async def test_change_password_success(async_client, admin_headers):
         await async_client.delete(f'/access/users/delete?username={username}', headers=admin_headers)
 
 
-@pytest.mark.anyio(loop_scope='session')
+
 async def test_change_password_nonexistent_user(async_client, admin_headers):
     """Test password change fails for non-existent user."""
     response = await async_client.put(
@@ -257,7 +258,7 @@ async def test_change_password_nonexistent_user(async_client, admin_headers):
     assert 'does not exist' in response.json()['detail']
 
 
-@pytest.mark.anyio(loop_scope='session')
+
 async def test_change_password_no_auth(async_client):
     """Test password change fails without authentication."""
     response = await async_client.put(
@@ -267,7 +268,7 @@ async def test_change_password_no_auth(async_client):
     assert response.status_code == 403  # Forbidden
 
 
-@pytest.mark.anyio(loop_scope='session')
+
 async def test_change_admin_password_as_standard_user(async_client, admin_headers):
     """Test that a standard user cannot change the admin password."""
     username = 'test_standard_user'
@@ -315,7 +316,7 @@ async def test_change_admin_password_as_standard_user(async_client, admin_header
 
 # === INTEGRATION TESTS ===
 
-@pytest.mark.anyio(loop_scope='session')
+
 async def test_user_lifecycle(async_client, admin_headers):
     """Test complete user lifecycle: create, use, change password, delete."""
     username = 'test_lifecycle_user'
@@ -389,7 +390,7 @@ async def test_user_lifecycle(async_client, admin_headers):
 
 # === REFRESH TOKEN TESTS ===
 
-@pytest.mark.anyio(loop_scope='session')
+
 async def test_refresh_token_success(async_client, admin_headers):
     """Test successful token refresh with valid refresh token."""
     # Get tokens for a user first
@@ -413,7 +414,7 @@ async def test_refresh_token_success(async_client, admin_headers):
     assert len(new_token['token']) > 0
 
 
-@pytest.mark.anyio(loop_scope='session')
+
 async def test_refresh_token_invalid(async_client):
     """Test refresh token fails with invalid token."""
     invalid_headers = {'Authorization': 'Bearer invalid_token_12345'}
@@ -421,7 +422,7 @@ async def test_refresh_token_invalid(async_client):
     assert response.status_code == 401
 
 
-@pytest.mark.anyio(loop_scope='session')
+
 async def test_refresh_token_no_auth(async_client):
     """Test refresh token fails without authentication."""
     response = await async_client.post('/access/users/refresh-token')
@@ -430,7 +431,7 @@ async def test_refresh_token_no_auth(async_client):
 
 # === VALIDATION TESTS FOR EDGE CASES ===
 
-@pytest.mark.anyio(loop_scope='session')
+
 async def test_create_user_invalid_json(async_client, admin_headers):
     """Test user creation with invalid JSON data."""
     response = await async_client.post(
@@ -441,7 +442,7 @@ async def test_create_user_invalid_json(async_client, admin_headers):
     assert response.status_code == 422  # Validation error
 
 
-@pytest.mark.anyio(loop_scope='session')
+
 async def test_change_password_invalid_json(async_client, admin_headers):
     """Test password change with invalid JSON data."""
     response = await async_client.put(
@@ -452,7 +453,7 @@ async def test_change_password_invalid_json(async_client, admin_headers):
     assert response.status_code == 422  # Validation error
 
 
-@pytest.mark.anyio(loop_scope='session')
+
 async def test_token_creation_invalid_json(async_client):
     """Test token creation with invalid JSON data."""
     response = await async_client.post(
@@ -464,14 +465,14 @@ async def test_token_creation_invalid_json(async_client):
 
 # === EMPTY STRING TESTS ===
 
-@pytest.mark.anyio(loop_scope='session')
+
 async def test_user_deletion_empty_username(async_client, admin_headers):
     """Test deletion with empty username."""
     response = await async_client.delete('/access/users/delete?username=', headers=admin_headers)
     assert response.status_code == 200  # Should be idempotent
 
 
-@pytest.mark.anyio(loop_scope='session')
+
 async def test_change_password_empty_username(async_client, admin_headers):
     """Test password change with empty username."""
     response = await async_client.put(

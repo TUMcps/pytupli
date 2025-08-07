@@ -13,8 +13,9 @@ from conftest import (
     add_user_to_group,
 )
 
+pytestmark = pytest.mark.anyio
 
-@pytest.mark.anyio(loop_scope='session')
+
 async def test_benchmarks_create(async_client, sample_benchmark, admin_headers):
     response, benchmark = await create_benchmark(async_client, sample_benchmark, admin_headers)
     assert response.status_code == 200
@@ -24,7 +25,7 @@ async def test_benchmarks_create(async_client, sample_benchmark, admin_headers):
     assert response.status_code == 200
 
 
-@pytest.mark.anyio(loop_scope='session')
+
 async def test_benchmarks_create_benchmark_exists_publicly(
     async_client, published_benchmark_user1, standard_user2_headers, sample_benchmark
 ):
@@ -35,7 +36,7 @@ async def test_benchmarks_create_benchmark_exists_publicly(
     assert response.status_code == 409
 
 
-@pytest.mark.anyio(loop_scope='session')
+
 async def test_benchmarks_duplication(
     async_client, created_benchmark_admin, admin_headers, sample_benchmark
 ):
@@ -46,7 +47,7 @@ async def test_benchmarks_duplication(
     assert response.status_code == 409
 
 
-@pytest.mark.anyio(loop_scope='session')
+
 async def test_benchmarks_load(created_benchmark_admin, async_client, admin_headers):
     # Get created benchmark
     _, created_benchmark = created_benchmark_admin
@@ -65,7 +66,7 @@ async def test_benchmarks_load(created_benchmark_admin, async_client, admin_head
     assert 'admin' in loaded_benchmark.published_in  # Benchmark is published in creator's group
 
 
-@pytest.mark.anyio(loop_scope='session')
+
 async def test_benchmarks_load_private_insufficient_rights(
     created_benchmark_admin, async_client, standard_user1_headers
 ):
@@ -76,7 +77,7 @@ async def test_benchmarks_load_private_insufficient_rights(
     assert response.status_code == 403
 
 
-@pytest.mark.anyio(loop_scope='session')
+
 async def test_benchmarks_publish(created_benchmark_admin, async_client, admin_headers):
     # Get created benchmark
     _, created_benchmark = created_benchmark_admin
@@ -93,7 +94,7 @@ async def test_benchmarks_publish(created_benchmark_admin, async_client, admin_h
     assert 'global' in loaded_benchmark.published_in
 
 
-@pytest.mark.anyio(loop_scope='session')
+
 async def test_benchmarks_delete(created_benchmark_admin, async_client, admin_headers):
     # Get created benchmark
     _, created_benchmark = created_benchmark_admin
@@ -107,7 +108,7 @@ async def test_benchmarks_delete(created_benchmark_admin, async_client, admin_he
     assert response.status_code == 404
 
 
-@pytest.mark.anyio(loop_scope='session')
+
 async def test_delete_benchmark_guest_forbidden(created_benchmark_admin, async_client):
     # Get created benchmark
     _, created_benchmark = created_benchmark_admin
@@ -119,7 +120,7 @@ async def test_delete_benchmark_guest_forbidden(created_benchmark_admin, async_c
     assert delete_response.status_code == 403
 
 
-@pytest.mark.anyio(loop_scope='session')
+
 async def test_delete_benchmark_other_user_forbidden(
     async_client, created_benchmark_user1, standard_user2_headers
 ):
@@ -130,7 +131,7 @@ async def test_delete_benchmark_other_user_forbidden(
     assert response.status_code == 403
 
 
-@pytest.mark.anyio(loop_scope='session')
+
 async def test_benchmarks_list(
     async_client, created_benchmark_user1, published_benchmark_admin, admin_headers
 ):
@@ -151,7 +152,7 @@ async def test_benchmarks_list(
     assert b2.id in admin_benchmark_ids
 
 
-@pytest.mark.anyio(loop_scope='session')
+
 async def test_delete_public_content(
     async_client, published_benchmark_user1, standard_user1_headers, admin_headers
 ):
@@ -163,7 +164,7 @@ async def test_delete_public_content(
     assert response.status_code == 200
 
 
-@pytest.mark.anyio(loop_scope='session')
+
 async def test_benchmarks_publish_in_user_group(
     async_client, created_benchmark_admin, admin_headers, standard_user1_headers
 ):
@@ -201,7 +202,7 @@ async def test_benchmarks_publish_in_user_group(
         await delete_group(async_client, admin_headers, test_group_name)
 
 
-@pytest.mark.anyio(loop_scope='session')
+
 async def test_benchmarks_publish_in_nonexistent_group(
     async_client, created_benchmark_admin, admin_headers
 ):
@@ -216,7 +217,7 @@ async def test_benchmarks_publish_in_nonexistent_group(
     assert publish_response.status_code == 403  # Should fail due to lack of permissions
 
 
-@pytest.mark.anyio(loop_scope='session')
+
 async def test_benchmarks_unpublish_success(
     async_client, created_benchmark_admin, admin_headers
 ):
@@ -250,7 +251,7 @@ async def test_benchmarks_unpublish_success(
     assert "global" not in loaded_benchmark.published_in
 
 
-@pytest.mark.anyio(loop_scope='session')
+
 async def test_benchmarks_unpublish_insufficient_permissions(
     async_client, created_benchmark_admin, admin_headers, standard_user1_headers
 ):
@@ -270,7 +271,7 @@ async def test_benchmarks_unpublish_insufficient_permissions(
     assert unpublish_response.status_code == 403  # Should fail due to insufficient permissions
 
 
-@pytest.mark.anyio(loop_scope='session')
+
 async def test_benchmarks_unpublish_from_user_group(
     async_client, created_benchmark_admin, admin_headers, standard_user1_headers
 ):
