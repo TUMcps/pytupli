@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pytupli"
-version = "1.2.1"
+version = "1.2.2"
 authors = [
     "Michael Eichelbeck <michael.eichelbeck@tum.de>",
     "Hannah Markgraf <hannah.markgraf@tum.de>",
