@@ -11,8 +11,8 @@ from conftest import (
 )
 from pytupli.schema import ArtifactMetadataItem
 
+pytestmark = pytest.mark.anyio
 
-@pytest.mark.anyio(loop_scope='session')
 async def test_artifact_upload(async_client, sample_artifact, admin_headers):
     data, _, expected_hash, metadata = sample_artifact
     response, uploaded_id = await upload_artifact(
@@ -25,7 +25,7 @@ async def test_artifact_upload(async_client, sample_artifact, admin_headers):
     await delete_artifact(async_client, uploaded_id, headers=admin_headers)
 
 
-@pytest.mark.anyio(loop_scope='session')
+
 async def test_artifact_duplicate_upload(
     async_client, uploaded_artifact_admin, sample_artifact, admin_headers
 ):
@@ -38,7 +38,7 @@ async def test_artifact_duplicate_upload(
     assert response.status_code == 200
 
 
-@pytest.mark.anyio(loop_scope='session')
+
 async def test_artifact_download(async_client, uploaded_artifact_admin, admin_headers):
     _, data_id, _, _, up_metadata = uploaded_artifact_admin
 
@@ -51,7 +51,7 @@ async def test_artifact_download(async_client, uploaded_artifact_admin, admin_he
     assert down_metadata.description == up_metadata.description
 
 
-@pytest.mark.anyio(loop_scope='session')
+
 async def test_artifact_download_insufficient_rights(
     async_client, uploaded_artifact_user1, standard_user2_headers
 ):
@@ -63,7 +63,7 @@ async def test_artifact_download_insufficient_rights(
     assert response.status_code == 403
 
 
-@pytest.mark.anyio(loop_scope='session')
+
 async def test_artifact_download_non_existing(async_client, admin_headers):
     response, _, _, _ = await download_artifact(
         async_client, 'non_existing_id', headers=admin_headers
@@ -71,7 +71,7 @@ async def test_artifact_download_non_existing(async_client, admin_headers):
     assert response.status_code == 404
 
 
-@pytest.mark.anyio(loop_scope='session')
+
 async def test_artifact_list_insufficient_rights(
     async_client, uploaded_artifact_admin, standard_user1_headers
 ):
@@ -81,7 +81,7 @@ async def test_artifact_list_insufficient_rights(
     assert len(artifacts) == 0
 
 
-@pytest.mark.anyio(loop_scope='session')
+
 async def test_artifact_delete(async_client, uploaded_artifact_admin, admin_headers):
     _, data_id, _, _, _ = uploaded_artifact_admin
     response = await delete_artifact(async_client, data_id, headers=admin_headers)
@@ -91,7 +91,7 @@ async def test_artifact_delete(async_client, uploaded_artifact_admin, admin_head
     assert response.status_code == 404
 
 
-@pytest.mark.anyio(loop_scope='session')
+
 async def test_artifact_published_list(
     async_client, published_artifact_admin, standard_user1_headers
 ):
@@ -108,7 +108,7 @@ async def test_artifact_published_list(
     assert artifacts[0].id == data_id
 
 
-@pytest.mark.anyio(loop_scope='session')
+
 async def test_artifact_publish_in_user_group(
     async_client, uploaded_artifact_admin, admin_headers, standard_user1_headers
 ):
@@ -145,7 +145,7 @@ async def test_artifact_publish_in_user_group(
         await delete_group(async_client, admin_headers, test_group_name)
 
 
-@pytest.mark.anyio(loop_scope='session')
+
 async def test_artifact_publish_in_nonexistent_group(
     async_client, uploaded_artifact_admin, admin_headers
 ):
@@ -160,7 +160,7 @@ async def test_artifact_publish_in_nonexistent_group(
     assert publish_response.status_code == 403  # Should fail due to lack of permissions
 
 
-@pytest.mark.anyio(loop_scope='session')
+
 async def test_artifact_unpublish_success(
     async_client, uploaded_artifact_admin, admin_headers
 ):
@@ -191,7 +191,7 @@ async def test_artifact_unpublish_success(
     # You may need to adjust this assertion based on your actual API behavior
 
 
-@pytest.mark.anyio(loop_scope='session')
+
 async def test_artifact_unpublish_insufficient_permissions(
     async_client, uploaded_artifact_admin, admin_headers, standard_user1_headers
 ):
