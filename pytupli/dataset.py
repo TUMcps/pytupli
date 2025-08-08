@@ -4,7 +4,7 @@ Module for everything related to dataset management.
 
 from __future__ import annotations
 from copy import deepcopy
-from typing import Callable, Generator, List
+from typing import Callable, Generator, List, Any
 import random
 import numpy as np
 
@@ -152,9 +152,10 @@ class TupliDataset:
 
     Args:
         storage (TupliStorage): The storage backend to fetch data from.
+        info (dict[str, Any] | None): Optional metadata or additional information about the dataset.
     """
 
-    def __init__(self, storage: TupliStorage, info: dict = {}):
+    def __init__(self, storage: TupliStorage, info: dict[str, Any] | None = None):
         self.storage = storage
         self.info = info
 
@@ -194,6 +195,36 @@ class TupliDataset:
             self.episodes = self.storage.list_episodes(episode_filter, include_tuples=with_tuples)
             self._refetch_episodes_flag = False
             self._refetch_tuples_flag = not with_tuples
+
+    @property
+    def observations(self) -> list[list[float]]:
+        """Returns a list of observations from all tuples in the dataset."""
+        return [tuple.state for tuple in self.tuples]
+
+    @property
+    def actions(self) -> list[list[float]]:
+        """Returns a list of actions from all tuples in the dataset."""
+        return [tuple.action for tuple in self.tuples]
+
+    @property
+    def rewards(self) -> list[float]:
+        """Returns a list of rewards from all tuples in the dataset."""
+        return [tuple.reward for tuple in self.tuples]
+
+    @property
+    def terminals(self) -> list[bool]:
+        """Returns a list of terminal flags from all tuples in the dataset."""
+        return [tuple.terminal for tuple in self.tuples]
+
+    @property
+    def timeouts(self) -> list[bool]:
+        """Returns a list of timeout flags from all tuples in the dataset."""
+        return [tuple.timeout for tuple in self.tuples]
+
+    @property
+    def infos(self) -> list[dict[str, Any]]:
+        """Returns a list of info dictionaries from all tuples in the dataset."""
+        return [tuple.info for tuple in self.tuples]
 
     def with_benchmark_filter(self, filter: BaseFilter) -> TupliDataset:
         """Creates a new dataset with an additional benchmark filter.
@@ -327,11 +358,11 @@ class TupliDataset:
             ImportError: If the required library for the format is not installed.
         """
         # First, convert tuples to lists
-        observations = [tuple.state for tuple in self.tuples]
-        actions = [tuple.action for tuple in self.tuples]
-        rewards = [tuple.reward for tuple in self.tuples]
-        terminals = [tuple.terminal for tuple in self.tuples]
-        timeouts = [tuple.timeout for tuple in self.tuples]
+        observations = self.observations
+        actions = self.actions
+        rewards = self.rewards
+        terminals = self.terminals
+        timeouts = self.timeouts
 
         # Use the parser to convert lists to the desired format
         return parser.parse_lists(observations, actions, rewards, terminals, timeouts)
