@@ -44,6 +44,12 @@ poetry install
 
 PyTupli has several optional dependency groups that can be installed based on your needs:
 
+> **Machine Learning Components**: To install PyTorch for advanced quality metrics:
+> ```bash
+> poetry install --with ml
+> ```
+> Note: `QFunctionMetric` requires PyTorch. `GeneralizedBehavioralEntropyMetric` only requires PyTorch if you provide an `observation_encoder`. If you try to use these without installing PyTorch, you'll get a helpful error message.
+
 > **Server Components**: To install dependencies for running the PyTupli server:
 > ```bash
 > poetry install --with server

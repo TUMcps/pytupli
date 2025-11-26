@@ -385,3 +385,80 @@ def benchmark_with_episodes(test_storage, test_env):
 
     # Cleanup after tests
     benchmark.delete(delete_episodes=True)
+
+
+@pytest.fixture
+def benchmark_with_varied_episodes(test_storage, test_env):
+    """Create a benchmark with more varied episodes for quality metrics testing."""
+    benchmark = TupliEnvWrapper(test_env, test_storage)
+    benchmark.store(
+        name="Quality Metrics Test Benchmark",
+        description="A benchmark for testing quality metrics",
+        difficulty="medium",
+        version="1.0"
+    )
+
+    # Record 5 episodes with varying characteristics
+    # Episode 1: High reward trajectory (all 1s)
+    obs, _ = benchmark.reset()
+    for _ in range(5):
+        obs, reward, term, trunc, _ = benchmark.step(np.int64(1))
+        if term or trunc:
+            break
+
+    # Episode 2: Low reward trajectory (all 0s)
+    obs, _ = benchmark.reset()
+    for _ in range(5):
+        obs, reward, term, trunc, _ = benchmark.step(np.int64(0))
+        if term or trunc:
+            break
+
+    # Episode 3: Mixed trajectory
+    obs, _ = benchmark.reset()
+    for action in [1, 0, 1, 0, 1]:
+        obs, reward, term, trunc, _ = benchmark.step(np.int64(action))
+        if term or trunc:
+            break
+
+    # Episode 4: Another mixed trajectory
+    obs, _ = benchmark.reset()
+    for action in [0, 1, 0, 1, 0]:
+        obs, reward, term, trunc, _ = benchmark.step(np.int64(action))
+        if term or trunc:
+            break
+
+    # Episode 5: Short trajectory
+    obs, _ = benchmark.reset()
+    for action in [1, 1]:
+        obs, reward, term, trunc, _ = benchmark.step(np.int64(action))
+        if term or trunc:
+            break
+
+    yield benchmark
+
+    # Cleanup after tests
+    benchmark.delete(delete_episodes=True)
+
+
+@pytest.fixture
+def loaded_dataset(benchmark_with_episodes, test_storage):
+    """Create a loaded dataset for testing."""
+    from pytupli.dataset import TupliDataset
+    from pytupli.schema import FilterEQ
+
+    dataset = TupliDataset(test_storage)
+    dataset = dataset.with_benchmark_filter(FilterEQ(key="id", value=benchmark_with_episodes.id))
+    dataset.load()
+    return dataset
+
+
+@pytest.fixture
+def loaded_varied_dataset(benchmark_with_varied_episodes, test_storage):
+    """Create a loaded dataset with varied episodes for quality metrics testing."""
+    from pytupli.dataset import TupliDataset
+    from pytupli.schema import FilterEQ
+
+    dataset = TupliDataset(test_storage)
+    dataset = dataset.with_benchmark_filter(FilterEQ(key="id", value=benchmark_with_varied_episodes.id))
+    dataset.load()
+    return dataset
