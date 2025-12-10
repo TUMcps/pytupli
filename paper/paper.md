@@ -6,7 +6,7 @@ authors:
     affiliation: 1
     corresponding: true
   - name: Michael Eichelbeck
-    orcid: 0000-0000-0000-0000
+    orcid: 0000-0002-1522-8767
     affiliation: 1
   - name: Daria Cappey
     affiliation: 1
@@ -15,7 +15,7 @@ authors:
   - name: Yara Schattschneider
     affiliation: 1
   - name: Matthias Althoff
-    orcid: 0000-0000-0000-0000
+    orcid: 0000-0003-3733-842X
     affiliation: 1
 affiliations:
   - name: Technical University of Munich, Germany
