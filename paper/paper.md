@@ -85,6 +85,25 @@ Return-based metrics, such as trajectory quality (TQ) [@schweighofer2022dataset]
 ### Coverage-Based Metrics
 An important question when assessing a dataset is whether the behavioral policy (or policies) used to generate it did explore the state and action space well enough to learn a meaningful target policy from the data. A common approach for quantifying explorativeness is to approximate the entropy of transition probabilities for the behavior policy. For discrete state and action spaces, @schweighofer2022dataset suggest to approximate this by counting unique state-action pairs. Optionally, this value can be normalized using a reference dataset $\mathcal{D}_\text{ref}$ of same size, for example, the replay buffer collected during online training. @schweighofer2022dataset show that low state-action coverage values hinder performance of a large variety of algorithms. While counting unique state-action pairs aims at estimating the Shannon entropy of the transition probabilities, @suttle2025behavioral suggest that datasets that maximize their proposed behavioral entropy metric support better offline RL performance. They suggest a $k$-nearest-neighbor estimator of the true behavioral entropy that relies on density-based weighting of different regions in the state-action space.
 
+# Software Design
+
+PyTupli is designed around a clear separation between a lightweight client library and a centralized server backend. On the client side, PyTupli integrates via a Gymnasium environment wrapper, which is a well-established abstraction in the RL ecosystem.
+The server component exposes a REST API that implements functionality specific to offline RL datasets, such as structured storage of benchmarks, episodes, and artifacts, as well as flexible filtering and access control. A centralized service was favored over object storage or git-based workflows because offline RL datasets require domain-specific querying and metadata handling that these approaches do not natively support. Deployment is simplified via a Docker Compose setup, providing a production-ready stack that can be launched with minimal configuration. Here, the API server is hidden behind an Nginx web server acting as a reverse proxy for increased scalability. We chose MongoDB as the backend due to its ability to store heterogeneous, evolving data without rigid schemas while supporting efficient indexing for nested fields. GridFS enables integrated storage of large artifacts, avoiding external dependencies.
+
+Existing tools such as Minari focus on distributing pre-existing datasets for offline RL. PyTupli instead targets research groups that need to create, host, and curate custom benchmarks collaboratively. This fundamental difference in scope and architecture made contributing to existing projects impractical, motivating the development of new software tailored to this use case.
+
+# Research Impact Statement
+
+Since its initial release on PyPI in May 2025, PyTupli has been downloaded approximately 10,000 times, suggesting early uptake by practitioners and researchers. The project is actively maintained by a small but committed team of two contributors, with ongoing development supported by a full automated test suite and a CI/CD pipeline that ensures reliability and code quality.
+
+Although PyTupli has not yet accumulated extensive academic citations, it demonstrates strong indicators of potential research impact through its technical maturity and readiness for community adoption. Comprehensive documentation is publicly available via ReadTheDocs ([https://pytupli.readthedocs.io/en/latest/](https://pytupli.readthedocs.io/en/latest/)), lowering the barrier to entry for new users. In addition, a set of tutorials (Jupyter notebooks) provides practical, hands-on guidance, enabling users to quickly integrate PyTupli into their own workflows.
+
+Importantly, PyTupli has already been integrated into external research software, most notably the CommonPower framework for reinforcement learning–based power system control. This integration demonstrates PyTupli’s applicability in real research settings and its potential to support future work in applied offline reinforcement learning. Together, these elements indicate that PyTupli is a robust, reusable, and community-ready research tool with growing impact potential.
+
+# AI Usage Disclosure
+
+Visual Studio Code with Claude Sonnet 4.5 was used for the scaffolding of the test in PyTupli. GPT 5.2 was used for refining the present manuscript.
+
 # Acknowledgements
 
 This work was partially supported by the German Research Foundation (AL 1185/9-1).
