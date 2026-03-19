@@ -1,0 +1,95 @@
+name: Basic PR Integration Checks
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - paper
+  workflow_dispatch:
+
+jobs:
+  local-code:
+    name: Local code checks (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.13"]
+
+    services:
+      mongo:
+        image: mongo:8.0
+        ports:
+          - 27017:27017
+
+    env:
+      MONGO_CONNECTION_STRING: mongodb://localhost:27017/
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install Poetry and tooling
+        run: |
+          python -m pip install --upgrade pip
+          pip install poetry==2.1.2 ruff keyrings.alt
+
+      - name: Install project dependencies (server + tests)
+        run: poetry install --with server,tests
+
+      - name: Prepare server environment file
+        run: cp pytupli/server/env.template pytupli/server/.env
+
+      - name: Lint code with Ruff
+        run: poetry run ruff check --output-format=github --target-version=py312
+
+      - name: Check formatting with Ruff
+        run: poetry run ruff format --diff --target-version=py312
+
+      - name: Run tests
+        run: poetry run pytest tests --cov=pytupli --cov-report=term --cov-report=xml:coverage.xml
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ matrix.python-version }}
+          path: coverage.xml
+
+  pypi-latest:
+    name: PyPI latest smoke test (Python 3.13)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: Install latest package from PyPI
+        run: |
+          python -m pip install --upgrade pip
+          pip install --upgrade pytupli
+
+      - name: Smoke test public integration imports
+        run: |
+          python - <<'PY'
+          import importlib
+
+          modules = [
+              "pytupli.benchmark",
+              "pytupli.dataset",
+              "pytupli.quality_metrics",
+              "pytupli.schema",
+              "pytupli.storage",
+          ]
+
+          for module_name in modules:
+              importlib.import_module(module_name)
+
+          print("Successfully imported core integration modules from latest PyPI release.")
+          PY
