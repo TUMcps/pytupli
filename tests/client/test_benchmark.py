@@ -3,7 +3,6 @@
 import pytest
 import numpy as np
 from pytupli.benchmark import TupliEnvWrapper
-from pytupli.storage import TupliStorageError
 from pytupli.schema import RLTuple
 
 from tests.client.example_envs import CustomTupliEnvWrapper
@@ -217,17 +216,15 @@ def test_cleanup(test_benchmark, test_storage):
     """Test proper cleanup of resources."""
     # Store benchmark and record some episodes
     test_benchmark.store(name='Test Benchmark', description='Test')
-    benchmark_id = test_benchmark.id
 
     # Record an episode
-    obs, _ = test_benchmark.reset()
+    _, _ = test_benchmark.reset()
     test_benchmark.step(np.int64(1))
     test_benchmark.step(np.int64(0))  # This should finish the episode
 
     # Get episode ID
     episodes = test_storage.list_episodes()
     assert len(episodes) == 1
-    episode_id = episodes[0].id
 
     # Delete the benchmark with cleanup
     test_benchmark.delete(delete_episodes=True)

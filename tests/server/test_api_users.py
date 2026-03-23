@@ -1,5 +1,4 @@
 import pytest
-from conftest import get_JWT_token
 
 pytestmark = pytest.mark.anyio
 

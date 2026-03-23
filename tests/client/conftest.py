@@ -11,9 +11,8 @@ import hashlib
 import uuid
 import shutil
 from pytupli.benchmark import TupliEnvWrapper
-from typing import Any
 
-from pytupli.storage import TupliAPIClient, FileStorage, TupliStorageError, TupliStorage
+from pytupli.storage import TupliAPIClient, FileStorage, TupliStorageError
 from pytupli.schema import (
     ArtifactMetadata,
     BenchmarkMetadata,
@@ -22,11 +21,6 @@ from pytupli.schema import (
     RLTuple,
 )
 from tests.client.example_envs import (
-    SimpleTestEnv,
-    ContinuousTestEnv,
-    TestEnvArtifact,
-    CustomTupliEnvWrapper,
-    CustomMetadataCallback,
     SimpleTestEnv,
     ContinuousTestEnv,
     TestEnvArtifact,
@@ -79,11 +73,11 @@ def clean_keyring():
     """Remove any existing tokens from keyring before tests."""
     try:
         keyring.delete_password('pytupli', 'access_token')
-    except:
+    except Exception:
         pass
     try:
         keyring.delete_password('pytupli', 'refresh_token')
-    except:
+    except Exception:
         pass
 
 

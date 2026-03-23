@@ -1,8 +1,6 @@
 import pytest
 import uuid
 import keyring
-import time
-from unittest.mock import patch
 
 from pytupli.storage import TupliAPIClient, TupliStorageError
 from pytupli.schema import (
@@ -20,7 +18,6 @@ from conftest import (
     ADMIN_USERNAME,
     ADMIN_PASSWORD,
     admin_cleanup,
-    clean_keyring,
 )
 
 
@@ -354,7 +351,6 @@ def test_add_group_members(api_user):
 
         # Create a test user
         admin_cleanup(None, 'user', test_user)  # Clean up in case it exists
-        from pytupli.schema import UserCredentials
 
         # We'll use signup to create the user
         temp_client = TupliAPIClient()

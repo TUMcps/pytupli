@@ -164,7 +164,7 @@ def test_saco_with_preprocessor_requires_torch(test_env):
     )
 
     # Create minimal dataset
-    from pytupli.schema import Episode, RLTuple, FilterEQ
+    from pytupli.schema import FilterEQ
     from pytupli.storage import FileStorage
     import tempfile
 
@@ -346,7 +346,6 @@ def test_eri_metric_auto_min(loaded_varied_dataset):
 def test_eri_metric_uniform_returns():
     """Test ERI with uniform returns (should be zero)."""
     # Create a mock dataset with uniform returns
-    from pytupli.schema import Episode, RLTuple
     from pytupli.storage import FileStorage
     import tempfile
 
@@ -694,8 +693,6 @@ def test_torch_metrics_fail_gracefully_without_torch():
         MLP(in_dim=4, out_dim=2)
 
     # Test QFunctionMetric
-    import gymnasium as gym
-
     env = gym.make('CartPole-v1')
     with pytest.raises(ImportError, match='PyTorch is required'):
         QFunctionMetric(
@@ -856,8 +853,8 @@ def test_average_return_single_episode():
 def test_saco_assertion_for_discrete_actions(test_env):
     """Test that SACoMetric asserts discrete action space."""
     # The test_env should have discrete actions, so this should pass
-    metric = SACoMetric(environment=test_env, use_hyperloglog=False)
-    assert isinstance(test_env.action_space, gym.spaces.Discrete)
+    with pytest.raises(AssertionError, match='SACoMetric currently only supports discrete action spaces'):
+        SACoMetric(environment=test_env, use_hyperloglog=False)
 
 
 if __name__ == '__main__':

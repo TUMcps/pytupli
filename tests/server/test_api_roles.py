@@ -1,5 +1,4 @@
 import pytest
-from httpx import AsyncClient
 from pytupli.schema import RIGHT, UserRole
 
 pytestmark = pytest.mark.anyio
