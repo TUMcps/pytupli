@@ -850,13 +850,13 @@ def test_average_return_single_episode():
         benchmark.delete(delete_episodes=True)
 
 
-def test_saco_assertion_for_discrete_actions(test_env):
+def test_saco_assertion_for_discrete_actions(test_env_continuous):
     """Test that SACoMetric asserts discrete action space."""
     # The test_env should have discrete actions, so this should pass
     with pytest.raises(
-        AssertionError, match='SACoMetric currently only supports discrete action spaces'
+        AssertionError, match='SACo currently only supports discrete action spaces.'
     ):
-        SACoMetric(environment=test_env, use_hyperloglog=False)
+        SACoMetric(environment=test_env_continuous, use_hyperloglog=False)
 
 
 if __name__ == '__main__':

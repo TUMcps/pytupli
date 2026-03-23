@@ -327,6 +327,12 @@ def test_env():
 
 
 @pytest.fixture(scope='function')
+def test_env_continuous():
+    """Create a test environment with continuous action space."""
+    return ContinuousTestEnv()
+
+
+@pytest.fixture(scope='function')
 def test_env_artifact():
     """Create a test environment with artifact."""
     return TestEnvArtifact()

@@ -83,7 +83,7 @@ def test_list_benchmarks_with_filter(storage, sample_benchmark_stored):
 def test_list_episodes_with_nested_filter(storage, sample_benchmark_stored, sample_episode_stored):
     """Test listing episodes with a nested filter."""
     # Create a filter
-    episode_filter = FilterEQ(key='id', value=sample_episode_stored.id)
+    episode_filter = FilterEQ(key='id', value=sample_episode_stored)
     # benchmark id filter
     benchmark_filter = FilterEQ(key='benchmark_id', value=sample_benchmark_stored)
     # nested filter combining both
