@@ -204,6 +204,7 @@ class MyTupliEnvWrapper(TupliEnvWrapper):
         env.unwrapped.data = df
         return env
 
+
 class MyCallback(EpisodeMetadataCallback):
     def __init__(self, is_expert: bool = False):
         super().__init__()
@@ -211,12 +212,14 @@ class MyCallback(EpisodeMetadataCallback):
         self.cum_reward = 0
         # Furthermore, we want to store the fact that the episode was not an expert episode
         self.is_expert = is_expert
+
     def reset(self):
         # we will compute the cumulative reward for an episode
         self.cum_reward = 0
+
     def __call__(self, tuple):
         self.cum_reward += tuple.reward
-        return {"cum_eps_reward": [self.cum_reward], "is_expert": self.is_expert}
+        return {'cum_eps_reward': [self.cum_reward], 'is_expert': self.is_expert}
 
 
 def discretize_observation(bins: int, ranges: tuple, observations: torch.tensor) -> torch.tensor:
@@ -237,7 +240,6 @@ def discretize_observation(bins: int, ranges: tuple, observations: torch.tensor)
         min_val = ranges[0][i]
         max_val = ranges[1][i]
         discretized[:, i] = np.digitize(
-            observations[:, i],
-            bins=np.linspace(min_val, max_val, bins + 1)[1:-1]
+            observations[:, i], bins=np.linspace(min_val, max_val, bins + 1)[1:-1]
         )
     return torch.tensor(discretized)

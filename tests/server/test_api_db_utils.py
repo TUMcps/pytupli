@@ -71,7 +71,9 @@ def test_convert_filter_to_query():
 def test_in_filter():
     # Test IN filter with array of strings
     in_filter = FilterIN(type=FilterType.IN, key='tags', value=['urgent', 'completed', 'review'])
-    assert convert_filter_to_query(in_filter) == {'tags': {'$in': ['urgent', 'completed', 'review']}}
+    assert convert_filter_to_query(in_filter) == {
+        'tags': {'$in': ['urgent', 'completed', 'review']}
+    }
 
     # Test IN filter with array of numbers
     in_filter_numbers = FilterIN(type=FilterType.IN, key='priority', value=[1, 3, 5])

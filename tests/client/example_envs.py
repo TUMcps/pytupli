@@ -12,9 +12,11 @@ from pytupli.schema import (
 )
 from pytupli.storage import TupliStorage
 
+
 # Test environment class
 class SimpleTestEnv(gym.Env):
     """Simple environment for testing."""
+
     def __init__(self):
         super().__init__()
         self.observation_space = spaces.Box(low=-1.0, high=1.0, shape=(2,), dtype=np.float32)
@@ -26,17 +28,19 @@ class SimpleTestEnv(gym.Env):
         super().reset(seed=seed)
         self.state = np.array([0.0, 0.0], dtype=np.float32)
         self.steps = 0
-        return self.state, {"test_key": "test_value"}
+        return self.state, {'test_key': 'test_value'}
 
     def step(self, action):
         self.steps += 1
         self.state = np.array([0.1 * action, 0.1 * self.steps], dtype=np.float32)
         terminated = self.steps >= 2
-        return self.state, float(action), terminated, False, {"test_key": "test_value"}
+        return self.state, float(action), terminated, False, {'test_key': 'test_value'}
+
 
 # Additional test environments for parameterized testing
 class ContinuousTestEnv(gym.Env):
     """Test environment with continuous action space."""
+
     def __init__(self):
         super().__init__()
         self.observation_space = spaces.Box(low=-1, high=1, shape=(2,))
@@ -52,9 +56,11 @@ class ContinuousTestEnv(gym.Env):
         self.state = np.array([action[0], self.state[1] + 0.1])
         return self.state, float(action[0]), self.state[1] >= 0.2, False, {}
 
+
 # Test environment class with artifact
 class TestEnvArtifact(SimpleTestEnv):
     """Simple environment for testing."""
+
     def __init__(self):
         super().__init__()
         # Create a simple CSV as bytes
@@ -63,6 +69,7 @@ class TestEnvArtifact(SimpleTestEnv):
         df = pd.read_csv(io.StringIO(csv_data), dtype={'t': str})
         df.set_index('t', inplace=True, verify_integrity=True)
         self.artifact_df = df
+
 
 class CustomTupliEnvWrapper(TupliEnvWrapper):
     def _serialize(self, env) -> Env:
@@ -92,6 +99,7 @@ class CustomTupliEnvWrapper(TupliEnvWrapper):
         env.artifact_df = df
         return env
 
+
 class CustomMetadataCallback(EpisodeMetadataCallback):
     """Test callback that tracks the maximum reward seen."""
 
@@ -104,7 +112,4 @@ class CustomMetadataCallback(EpisodeMetadataCallback):
     def __call__(self, last_tuple: RLTuple) -> dict[str, Any]:
         reward = last_tuple.reward
         self.max_reward = max(self.max_reward, reward)
-        return {
-            'reward': reward,
-            'max_reward_seen': self.max_reward
-        }
+        return {'reward': reward, 'max_reward_seen': self.max_reward}

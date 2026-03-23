@@ -73,6 +73,7 @@ def temp_dir():
     except Exception as e:
         print(f'Warning: Failed to clean up temporary directory: {e}')
 
+
 @pytest.fixture(scope='function')
 def clean_keyring():
     """Remove any existing tokens from keyring before tests."""
@@ -84,6 +85,7 @@ def clean_keyring():
         keyring.delete_password('pytupli', 'refresh_token')
     except:
         pass
+
 
 def admin_cleanup(storage, resource_type, resource_id):
     """
@@ -268,6 +270,7 @@ def sample_episode(sample_benchmark_stored):
         ],
     )
 
+
 @pytest.fixture(scope='function')
 def sample_episode_2(sample_benchmark_stored):
     """Create a sample episode for testing."""
@@ -296,6 +299,7 @@ def sample_episode_2(sample_benchmark_stored):
         ],
     )
 
+
 @pytest.fixture(scope='function')
 def sample_episode_stored(request, storage, sample_episode):
     """Store an episode and return its ID for further tests."""
@@ -307,6 +311,7 @@ def sample_episode_stored(request, storage, sample_episode):
 
     # Cleanup after test finishes
     admin_cleanup(storage, 'episode', episode_header.id)
+
 
 @pytest.fixture(scope='function')
 def sample_episode_2_stored(request, storage, sample_episode_2):
@@ -326,25 +331,30 @@ def test_env():
     """Create a test environment."""
     return SimpleTestEnv()
 
+
 @pytest.fixture(scope='function')
 def test_env_artifact():
     """Create a test environment with artifact."""
     return TestEnvArtifact()
+
 
 @pytest.fixture(scope='function')
 def test_storage(temp_dir):
     """Create a file storage instance for testing."""
     return FileStorage(storage_base_dir=temp_dir)
 
+
 @pytest.fixture(scope='function')
 def test_benchmark(test_env, test_storage) -> TupliEnvWrapper:
     """Create a TupliEnvWrapper instance for testing."""
     return TupliEnvWrapper(test_env, test_storage)
 
+
 @pytest.fixture(scope='function')
 def test_benchmark_artifact(test_env_artifact, test_storage) -> TupliEnvWrapper:
     """Create a TupliEnvWrapper instance with artifact for testing."""
     return CustomTupliEnvWrapper(test_env_artifact, test_storage)
+
 
 @pytest.fixture(scope='function')
 def test_benchmark_with_metadata(test_env, test_storage) -> TupliEnvWrapper:
@@ -352,23 +362,22 @@ def test_benchmark_with_metadata(test_env, test_storage) -> TupliEnvWrapper:
     metadata_callback = CustomMetadataCallback()
     return TupliEnvWrapper(test_env, test_storage, metadata_callback=metadata_callback)
 
-@pytest.fixture(params=[
-    SimpleTestEnv,
-    ContinuousTestEnv
-])
+
+@pytest.fixture(params=[SimpleTestEnv, ContinuousTestEnv])
 def parameterized_env(request):
     """Fixture that provides different types of environments."""
     return request.param()
+
 
 @pytest.fixture
 def benchmark_with_episodes(test_storage, test_env):
     """Create a benchmark and record some episodes."""
     benchmark = TupliEnvWrapper(test_env, test_storage)
     benchmark.store(
-        name="Test Dataset Benchmark",
-        description="A benchmark for dataset tests",
-        difficulty="easy",
-        version="1.0"
+        name='Test Dataset Benchmark',
+        description='A benchmark for dataset tests',
+        difficulty='easy',
+        version='1.0',
     )
 
     # Record three episodes with different actions
@@ -392,10 +401,10 @@ def benchmark_with_varied_episodes(test_storage, test_env):
     """Create a benchmark with more varied episodes for quality metrics testing."""
     benchmark = TupliEnvWrapper(test_env, test_storage)
     benchmark.store(
-        name="Quality Metrics Test Benchmark",
-        description="A benchmark for testing quality metrics",
-        difficulty="medium",
-        version="1.0"
+        name='Quality Metrics Test Benchmark',
+        description='A benchmark for testing quality metrics',
+        difficulty='medium',
+        version='1.0',
     )
 
     # Record 5 episodes with varying characteristics
@@ -447,7 +456,7 @@ def loaded_dataset(benchmark_with_episodes, test_storage):
     from pytupli.schema import FilterEQ
 
     dataset = TupliDataset(test_storage)
-    dataset = dataset.with_benchmark_filter(FilterEQ(key="id", value=benchmark_with_episodes.id))
+    dataset = dataset.with_benchmark_filter(FilterEQ(key='id', value=benchmark_with_episodes.id))
     dataset.load()
     return dataset
 
@@ -459,6 +468,8 @@ def loaded_varied_dataset(benchmark_with_varied_episodes, test_storage):
     from pytupli.schema import FilterEQ
 
     dataset = TupliDataset(test_storage)
-    dataset = dataset.with_benchmark_filter(FilterEQ(key="id", value=benchmark_with_varied_episodes.id))
+    dataset = dataset.with_benchmark_filter(
+        FilterEQ(key='id', value=benchmark_with_varied_episodes.id)
+    )
     dataset.load()
     return dataset

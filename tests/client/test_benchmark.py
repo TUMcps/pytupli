@@ -1,4 +1,5 @@
 """Test methods of environment wrapper module."""
+
 import pytest
 import numpy as np
 from pytupli.benchmark import TupliEnvWrapper
@@ -6,6 +7,7 @@ from pytupli.storage import TupliStorageError
 from pytupli.schema import RLTuple
 
 from tests.client.example_envs import CustomTupliEnvWrapper
+
 
 def test_serialize_env(parameterized_env):
     """Test serialization and deserialization of environment."""
@@ -17,6 +19,7 @@ def test_serialize_env(parameterized_env):
     deserialized = TupliEnvWrapper.deserialize_env(serialized, None)
     assert isinstance(deserialized, type(parameterized_env))
 
+
 def test_serialize_env_with_artifact(test_benchmark_artifact, test_env_artifact, test_storage):
     """Test serialization and deserialization of environment with artifact."""
     serialized = test_benchmark_artifact.serialize_env(test_env_artifact)
@@ -25,22 +28,24 @@ def test_serialize_env_with_artifact(test_benchmark_artifact, test_env_artifact,
     # Test deserialization
     deserialized = CustomTupliEnvWrapper.deserialize_env(serialized, storage=test_storage)
     assert isinstance(deserialized, type(test_env_artifact))
-    assert deserialized.artifact_df.iloc[0,0] == 10
+    assert deserialized.artifact_df.iloc[0, 0] == 10
+
 
 def test_load_non_existent_benchmark(test_storage):
     """Test loading a non-existent benchmark."""
     with pytest.raises(Exception):
-        TupliEnvWrapper.load(test_storage, "non_existent_id")
+        TupliEnvWrapper.load(test_storage, 'non_existent_id')
+
 
 def test_store_and_load(test_benchmark, test_storage):
     """Test storing and loading a benchmark."""
     # Store the benchmark
     test_benchmark.store(
-        name="Test Benchmark",
-        description="A test benchmark",
-        difficulty="easy",
-        version="1.0",
-        metadata={"test_key": "test_value"}
+        name='Test Benchmark',
+        description='A test benchmark',
+        difficulty='easy',
+        version='1.0',
+        metadata={'test_key': 'test_value'},
     )
     assert test_benchmark.id is not None
 
@@ -57,25 +62,28 @@ def test_store_and_load(test_benchmark, test_storage):
     assert np.array_equal(obs, np.array([0.1, 0.1], dtype=np.float32))
     test_benchmark.delete()
 
+
 def test_duplicate_store(test_benchmark):
     """Test storing the same benchmark multiple times."""
     # First store
-    test_benchmark.store(name="Test Benchmark", description="Test")
+    test_benchmark.store(name='Test Benchmark', description='Test')
     first_id = test_benchmark.id
 
     # Second store of same benchmark
-    test_benchmark.store(name="Test Benchmark", description="Test")
+    test_benchmark.store(name='Test Benchmark', description='Test')
     second_id = test_benchmark.id
 
     # IDs should be the same since it's the same benchmark
     assert first_id == second_id
     test_benchmark.delete()
 
+
 def test_publish(test_benchmark):
     """Test publishing a benchmark."""
-    test_benchmark.store(name="Test Benchmark", description="Test")
+    test_benchmark.store(name='Test Benchmark', description='Test')
     test_benchmark.publish()  # Test the publish functionality
     test_benchmark.delete()
+
 
 def test_convert_to_tuple():
     """Test the tuple conversion functionality."""
@@ -84,7 +92,7 @@ def test_convert_to_tuple():
     reward = 1.0
     terminated = True
     truncated = False
-    info = {"test": "info"}
+    info = {'test': 'info'}
 
     rl_tuple = RLTuple.from_env_step(obs, action, reward, terminated, truncated, info)
 
@@ -95,10 +103,11 @@ def test_convert_to_tuple():
     assert rl_tuple.timeout == truncated
     assert rl_tuple.info == info
 
+
 def test_invalid_numpy_types():
     """Test handling of invalid numpy types in observations and actions."""
     # Test with invalid observation type (string array)
-    with pytest.raises(ValueError, match="Unsupported observation type"):
+    with pytest.raises(ValueError, match='Unsupported observation type'):
         RLTuple.from_env_step(
             'invalid',
             np.array([1]),
@@ -109,25 +118,26 @@ def test_invalid_numpy_types():
         )
 
     # Test with invalid action type (string)
-    with pytest.raises(ValueError, match="Unsupported action type"):
+    with pytest.raises(ValueError, match='Unsupported action type'):
         RLTuple.from_env_step(
             np.zeros(2),
-            "invalid",
+            'invalid',
             0.0,
             False,
             False,
             {},
         )
 
+
 def test_basic_recording(test_benchmark):
     """Test basic recording of episodes."""
     # Store benchmark
     test_benchmark.store(
-        name="Test Benchmark",
-        description="A test benchmark",
-        difficulty="easy",
-        version="1.0",
-        metadata={"test_key": "test_value"}
+        name='Test Benchmark',
+        description='A test benchmark',
+        difficulty='easy',
+        version='1.0',
+        metadata={'test_key': 'test_value'},
     )
     assert test_benchmark.id is not None
     # Reset environment and take a few steps
@@ -153,15 +163,16 @@ def test_basic_recording(test_benchmark):
     assert len(test_benchmark.tuple_buffer) == 0
     test_benchmark.delete()
 
+
 def test_recording_control(test_benchmark):
     """Test activation and deactivation of recording."""
     # Store benchmark
     test_benchmark.store(
-        name="Test Benchmark",
-        description="A test benchmark",
-        difficulty="easy",
-        version="1.0",
-        metadata={"test_key": "test_value"}
+        name='Test Benchmark',
+        description='A test benchmark',
+        difficulty='easy',
+        version='1.0',
+        metadata={'test_key': 'test_value'},
     )
     # Start with recording active (default state)
     obs, _ = test_benchmark.reset()
@@ -176,17 +187,16 @@ def test_recording_control(test_benchmark):
     # Test reactivation
     test_benchmark.activate_recording()
     test_benchmark.step(np.int64(1))
-    assert len(test_benchmark.tuple_buffer) == 0  # The episode ends after two steps, so we delete the buffer
+    assert (
+        len(test_benchmark.tuple_buffer) == 0
+    )  # The episode ends after two steps, so we delete the buffer
     test_benchmark.delete()
+
 
 def test_recording_episodes(test_benchmark):
     """Test that episodes are properly recorded and stored."""
     # Store the benchmark first
-    test_benchmark.store(
-        name="Test Benchmark",
-        description="A test benchmark",
-        metadata={}
-    )
+    test_benchmark.store(name='Test Benchmark', description='A test benchmark', metadata={})
 
     # Complete an episode
     obs, _ = test_benchmark.reset()
@@ -202,10 +212,11 @@ def test_recording_episodes(test_benchmark):
     assert episodes[0].tuples[1].terminal
     test_benchmark.delete()
 
+
 def test_cleanup(test_benchmark, test_storage):
     """Test proper cleanup of resources."""
     # Store benchmark and record some episodes
-    test_benchmark.store(name="Test Benchmark", description="Test")
+    test_benchmark.store(name='Test Benchmark', description='Test')
     benchmark_id = test_benchmark.id
 
     # Record an episode
@@ -229,9 +240,10 @@ def test_cleanup(test_benchmark, test_storage):
     episodes = test_storage.list_episodes()
     assert len(episodes) == 0
 
+
 def test_delete_with_artifacts(test_benchmark_artifact, test_storage):
     """Test deleting a benchmark with artifacts."""
-    test_benchmark_artifact.store(name="Test Benchmark", description="Test")
+    test_benchmark_artifact.store(name='Test Benchmark', description='Test')
     # Test deletion with artifacts
     test_benchmark_artifact.delete(delete_artifacts=True)
 
@@ -239,16 +251,19 @@ def test_delete_with_artifacts(test_benchmark_artifact, test_storage):
     artifacts = test_storage.list_artifacts()
     assert len(artifacts) == 0
 
+
 def test_episode_metadata_callback(test_benchmark_with_metadata, test_storage):
     """Test that episode metadata callbacks work correctly."""
     # Store the benchmark
-    test_benchmark_with_metadata.store(name="Test Benchmark", description="Test")
+    test_benchmark_with_metadata.store(name='Test Benchmark', description='Test')
 
     # Run a few episodes
     for _ in range(3):
         obs, _ = test_benchmark_with_metadata.reset()
         for _ in range(2):
-            obs, reward, term, trunc, _ = test_benchmark_with_metadata.step(np.int64(1))  # Always take action 1
+            obs, reward, term, trunc, _ = test_benchmark_with_metadata.step(
+                np.int64(1)
+            )  # Always take action 1
             if term or trunc:
                 break
 
@@ -264,6 +279,7 @@ def test_episode_metadata_callback(test_benchmark_with_metadata, test_storage):
         assert episode.metadata['max_reward_seen'] >= episode.metadata['reward']
     test_benchmark_with_metadata.delete()
 
+
 def test_benchmark_hash_consistency(test_benchmark):
     """Test that the same environment produces the same hash."""
     env = test_benchmark.env
@@ -272,12 +288,13 @@ def test_benchmark_hash_consistency(test_benchmark):
     assert hash1 == hash2
 
     # Store with same content should produce same ID
-    test_benchmark.store(name="Test1", description="Test")
+    test_benchmark.store(name='Test1', description='Test')
     id1 = test_benchmark.id
-    test_benchmark.store(name="Test1", description="Test")
+    test_benchmark.store(name='Test1', description='Test')
     id2 = test_benchmark.id
     assert id1 == id2  # IDs should be same since environment is same
     test_benchmark.delete()
+
 
 if __name__ == '__main__':
     pytest.main(['-v', __file__])

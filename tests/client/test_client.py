@@ -5,11 +5,26 @@ import time
 from unittest.mock import patch
 
 from pytupli.storage import TupliAPIClient, TupliStorageError
-from pytupli.schema import UserOut, UserRole, Group, GroupMembership, GroupMembershipQuery, GroupWithMembers
-from conftest import API_BASE_URL, API_USERNAME, API_PASSWORD, ADMIN_USERNAME, ADMIN_PASSWORD, admin_cleanup, clean_keyring
+from pytupli.schema import (
+    UserOut,
+    UserRole,
+    Group,
+    GroupMembership,
+    GroupMembershipQuery,
+    GroupWithMembers,
+)
+from conftest import (
+    API_BASE_URL,
+    API_USERNAME,
+    API_PASSWORD,
+    ADMIN_USERNAME,
+    ADMIN_PASSWORD,
+    admin_cleanup,
+    clean_keyring,
+)
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope='function')
 def api_client(clean_keyring):
     """Create a TupliAPIClient instance for testing."""
     client = TupliAPIClient()
@@ -21,11 +36,11 @@ def api_client(clean_keyring):
 def test_signup_success(api_client):
     """Test successful user signup."""
     # Create a unique test username to avoid conflicts
-    test_username = f"test_signup_{uuid.uuid4().hex[:8]}"
+    test_username = f'test_signup_{uuid.uuid4().hex[:8]}'
 
     try:
         # Call the signup method
-        user = api_client.signup(test_username, "test_password")
+        user = api_client.signup(test_username, 'test_password')
 
         # Verify results
         assert user is not None
@@ -41,15 +56,15 @@ def test_signup_success(api_client):
 def test_signup_user_exists(api_client):
     """Test signup when user already exists."""
     # Create a test user first
-    test_username = f"test_exists_{uuid.uuid4().hex[:8]}"
+    test_username = f'test_exists_{uuid.uuid4().hex[:8]}'
 
     try:
         # First signup should succeed
-        api_client.signup(test_username, "test_password")
+        api_client.signup(test_username, 'test_password')
 
         # Second signup with the same username should fail
-        with pytest.raises(TupliStorageError, match="Signup failed"):
-            api_client.signup(test_username, "different_password")
+        with pytest.raises(TupliStorageError, match='Signup failed'):
+            api_client.signup(test_username, 'different_password')
     finally:
         # Clean up the created user
         admin_cleanup(None, 'user', test_username)
@@ -85,8 +100,8 @@ def test_login_with_url(api_client, api_user):
 def test_login_invalid_credentials(api_client):
     """Test login with invalid credentials."""
     # Verify the correct exception is raised with wrong password
-    with pytest.raises(TupliStorageError, match="Login failed"):
-        api_client.login(API_USERNAME, "wrong_password")
+    with pytest.raises(TupliStorageError, match='Login failed'):
+        api_client.login(API_USERNAME, 'wrong_password')
 
     # Verify no tokens were stored
     assert keyring.get_password('pytupli', 'access_token') is None
@@ -131,16 +146,16 @@ def test_list_roles(api_user):
     assert all(isinstance(r, UserRole) for r in roles)
     # Check for expected roles
     role_names = [r.role for r in roles]
-    assert "admin" in role_names
-    assert "guest" in role_names
+    assert 'admin' in role_names
+    assert 'guest' in role_names
 
 
 def test_change_password(api_client):
     """Test successfully changing a user's password."""
     # Create a unique test user for this test
-    test_username = f"test_pwd_change_{uuid.uuid4().hex[:8]}"
-    initial_password = "initial_password"
-    new_password = "new_password_123"
+    test_username = f'test_pwd_change_{uuid.uuid4().hex[:8]}'
+    initial_password = 'initial_password'
+    new_password = 'new_password_123'
 
     try:
         # Create the user
@@ -168,17 +183,17 @@ def test_change_password_unauthorized(api_user):
     user_info, client = api_user
 
     # Try to change the admin's password as a regular user
-    with pytest.raises(TupliStorageError, match="API request failed"):
-        client.change_password(ADMIN_USERNAME, "new_admin_password")
+    with pytest.raises(TupliStorageError, match='API request failed'):
+        client.change_password(ADMIN_USERNAME, 'new_admin_password')
 
 
 def test_delete_user(api_client):
     """Test successfully deleting a user."""
     # Create a unique test user for this test
-    test_username = f"test_delete_{uuid.uuid4().hex[:8]}"
+    test_username = f'test_delete_{uuid.uuid4().hex[:8]}'
 
     # First create the user
-    api_client.signup(test_username, "test_password")
+    api_client.signup(test_username, 'test_password')
 
     # Login as admin to delete the user
     api_client.login(ADMIN_USERNAME, ADMIN_PASSWORD)
@@ -200,14 +215,14 @@ def test_delete_user_unauthorized(api_client, api_user):
     user_info, client = api_user
 
     # Create another test user that we'll try to delete
-    test_username = f"test_delete_unauth_{uuid.uuid4().hex[:8]}"
+    test_username = f'test_delete_unauth_{uuid.uuid4().hex[:8]}'
 
     try:
         # Create the second test user
-        api_client.signup(test_username, "test_password")
+        api_client.signup(test_username, 'test_password')
 
         # Try to delete it as a regular user, which should fail
-        with pytest.raises(TupliStorageError, match="API request failed"):
+        with pytest.raises(TupliStorageError, match='API request failed'):
             client.delete_user(test_username)
 
         # Verify the user still exists
@@ -230,8 +245,8 @@ def test_create_group(api_user):
     admin_client = TupliAPIClient()
     admin_client.login(ADMIN_USERNAME, ADMIN_PASSWORD)
 
-    group_name = f"test_group_{uuid.uuid4().hex[:8]}"
-    group = Group(name=group_name, description="Test group for client testing")
+    group_name = f'test_group_{uuid.uuid4().hex[:8]}'
+    group = Group(name=group_name, description='Test group for client testing')
 
     try:
         # Create the group
@@ -241,7 +256,7 @@ def test_create_group(api_user):
         assert created_group is not None
         assert isinstance(created_group, Group)
         assert created_group.name == group_name
-        assert created_group.description == "Test group for client testing"
+        assert created_group.description == 'Test group for client testing'
 
     finally:
         # Clean up the created group
@@ -273,8 +288,8 @@ def test_read_group(api_user):
     admin_client = TupliAPIClient()
     admin_client.login(ADMIN_USERNAME, ADMIN_PASSWORD)
 
-    group_name = f"test_read_group_{uuid.uuid4().hex[:8]}"
-    group = Group(name=group_name, description="Test group for reading")
+    group_name = f'test_read_group_{uuid.uuid4().hex[:8]}'
+    group = Group(name=group_name, description='Test group for reading')
 
     try:
         # Create the group first
@@ -287,7 +302,7 @@ def test_read_group(api_user):
         assert read_group is not None
         assert isinstance(read_group, GroupWithMembers)
         assert read_group.name == group_name
-        assert read_group.description == "Test group for reading"
+        assert read_group.description == 'Test group for reading'
         assert isinstance(read_group.members, list)
 
     finally:
@@ -303,8 +318,8 @@ def test_delete_group(api_user):
     admin_client = TupliAPIClient()
     admin_client.login(ADMIN_USERNAME, ADMIN_PASSWORD)
 
-    group_name = f"test_delete_group_{uuid.uuid4().hex[:8]}"
-    group = Group(name=group_name, description="Test group for deletion")
+    group_name = f'test_delete_group_{uuid.uuid4().hex[:8]}'
+    group = Group(name=group_name, description='Test group for deletion')
 
     # Create the group first
     admin_client.create_group(group)
@@ -329,9 +344,9 @@ def test_add_group_members(api_user):
     admin_client = TupliAPIClient()
     admin_client.login(ADMIN_USERNAME, ADMIN_PASSWORD)
 
-    group_name = f"test_members_group_{uuid.uuid4().hex[:8]}"
-    group = Group(name=group_name, description="Test group for member management")
-    test_user = f"test_member_{uuid.uuid4().hex[:8]}"
+    group_name = f'test_members_group_{uuid.uuid4().hex[:8]}'
+    group = Group(name=group_name, description='Test group for member management')
+    test_user = f'test_member_{uuid.uuid4().hex[:8]}'
 
     try:
         # Create the group
@@ -340,14 +355,14 @@ def test_add_group_members(api_user):
         # Create a test user
         admin_cleanup(None, 'user', test_user)  # Clean up in case it exists
         from pytupli.schema import UserCredentials
+
         # We'll use signup to create the user
         temp_client = TupliAPIClient()
-        temp_client.signup(test_user, "test_password")
+        temp_client.signup(test_user, 'test_password')
 
         # Add the user to the group
         membership_query = GroupMembershipQuery(
-            group_name=group_name,
-            members=[GroupMembership(user=test_user, roles=["member"])]
+            group_name=group_name, members=[GroupMembership(user=test_user, roles=['member'])]
         )
 
         updated_group = admin_client.add_group_members(membership_query)
@@ -372,9 +387,9 @@ def test_remove_group_members(api_user):
     admin_client = TupliAPIClient()
     admin_client.login(ADMIN_USERNAME, ADMIN_PASSWORD)
 
-    group_name = f"test_remove_group_{uuid.uuid4().hex[:8]}"
-    group = Group(name=group_name, description="Test group for member removal")
-    test_user = f"test_remove_member_{uuid.uuid4().hex[:8]}"
+    group_name = f'test_remove_group_{uuid.uuid4().hex[:8]}'
+    group = Group(name=group_name, description='Test group for member removal')
+    test_user = f'test_remove_member_{uuid.uuid4().hex[:8]}'
 
     try:
         # Create the group
@@ -383,19 +398,17 @@ def test_remove_group_members(api_user):
         # Create a test user
         admin_cleanup(None, 'user', test_user)  # Clean up in case it exists
         temp_client = TupliAPIClient()
-        temp_client.signup(test_user, "test_password")
+        temp_client.signup(test_user, 'test_password')
 
         # Add the user to the group first
         add_query = GroupMembershipQuery(
-            group_name=group_name,
-            members=[GroupMembership(user=test_user, roles=["member"])]
+            group_name=group_name, members=[GroupMembership(user=test_user, roles=['member'])]
         )
         admin_client.add_group_members(add_query)
 
         # Now remove the user from the group
         remove_query = GroupMembershipQuery(
-            group_name=group_name,
-            members=[GroupMembership(user=test_user)]
+            group_name=group_name, members=[GroupMembership(user=test_user)]
         )
 
         updated_group = admin_client.remove_group_members(remove_query)
@@ -420,11 +433,9 @@ def test_create_role():
 
     from pytupli.schema import RIGHT
 
-    role_name = f"test_role_{uuid.uuid4().hex[:8]}"
+    role_name = f'test_role_{uuid.uuid4().hex[:8]}'
     role = UserRole(
-        role=role_name,
-        description="Test role for client testing",
-        rights=[RIGHT.ARTIFACT_READ]
+        role=role_name, description='Test role for client testing', rights=[RIGHT.ARTIFACT_READ]
     )
 
     try:
@@ -435,7 +446,7 @@ def test_create_role():
         assert created_role is not None
         assert isinstance(created_role, UserRole)
         assert created_role.role == role_name
-        assert created_role.description == "Test role for client testing"
+        assert created_role.description == 'Test role for client testing'
         assert RIGHT.ARTIFACT_READ in created_role.rights
 
     finally:
@@ -451,11 +462,9 @@ def test_delete_role():
 
     from pytupli.schema import RIGHT
 
-    role_name = f"test_delete_role_{uuid.uuid4().hex[:8]}"
+    role_name = f'test_delete_role_{uuid.uuid4().hex[:8]}'
     role = UserRole(
-        role=role_name,
-        description="Test role for deletion",
-        rights=[RIGHT.ARTIFACT_READ]
+        role=role_name, description='Test role for deletion', rights=[RIGHT.ARTIFACT_READ]
     )
 
     # Create the role first

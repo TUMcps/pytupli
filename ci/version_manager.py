@@ -103,9 +103,11 @@ def main():
     update_docs_conf(docs_conf_path, current_version, new_version)
 
     # Save the original commit message to use in RELEASE_DESCRIPTION
-    cleaned_message = commit_message.replace('[major-release]', '').replace('[minor-release]', '').strip()
+    cleaned_message = (
+        commit_message.replace('[major-release]', '').replace('[minor-release]', '').strip()
+    )
     if not cleaned_message:
-        cleaned_message = f"Release version {new_version}"
+        cleaned_message = f'Release version {new_version}'
 
     # Output for GitLab CI - properly escape the release description for shell
     with open('version.env', 'w') as f:

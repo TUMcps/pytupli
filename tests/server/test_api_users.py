@@ -29,7 +29,6 @@ async def test_token_creation_success(async_client):
     assert len(token_data['refresh_token']['token']) > 0
 
 
-
 async def test_token_creation_wrong_password(async_client):
     """Test token creation fails with wrong password."""
     response = await async_client.post(
@@ -40,7 +39,6 @@ async def test_token_creation_wrong_password(async_client):
     assert 'Incorrect username or password' in response.json()['detail']
 
 
-
 async def test_token_creation_nonexistent_user(async_client):
     """Test token creation fails with non-existent user."""
     response = await async_client.post(
@@ -49,7 +47,6 @@ async def test_token_creation_nonexistent_user(async_client):
     )
     assert response.status_code == 401
     assert 'Incorrect username or password' in response.json()['detail']
-
 
 
 async def test_token_creation_empty_credentials(async_client):
@@ -97,9 +94,10 @@ async def test_user_creation_success(async_client, admin_headers):
     assert 'memberships' in user_data
 
     # Cleanup
-    cleanup = await async_client.delete(f'/access/users/delete?username={username}', headers=admin_headers)
+    cleanup = await async_client.delete(
+        f'/access/users/delete?username={username}', headers=admin_headers
+    )
     assert cleanup.status_code == 200
-
 
 
 async def test_user_creation_duplicate_username(async_client, admin_headers):
@@ -128,7 +126,10 @@ async def test_user_creation_duplicate_username(async_client, admin_headers):
         assert 'already exists' in response.json()['detail']
     finally:
         # Cleanup
-        await async_client.delete(f'/access/users/delete?username={username}', headers=admin_headers)
+        await async_client.delete(
+            f'/access/users/delete?username={username}', headers=admin_headers
+        )
+
 
 # === USER LISTING TESTS ===
 
@@ -149,7 +150,6 @@ async def test_user_listing_success(async_client, admin_headers):
         assert 'username' in user
         assert 'memberships' in user
         assert 'password' not in user  # Password should never be returned
-
 
 
 async def test_user_listing_no_auth(async_client):
@@ -174,7 +174,9 @@ async def test_user_deletion_success(async_client, admin_headers):
     assert response.status_code == 200
 
     # Delete user
-    response = await async_client.delete(f'/access/users/delete?username={username}', headers=admin_headers)
+    response = await async_client.delete(
+        f'/access/users/delete?username={username}', headers=admin_headers
+    )
     assert response.status_code == 200
 
     # Verify user no longer exists in list
@@ -184,12 +186,12 @@ async def test_user_deletion_success(async_client, admin_headers):
     assert username not in usernames
 
 
-
 async def test_user_deletion_nonexistent(async_client, admin_headers):
     """Test deletion of non-existent user returns success (idempotent)."""
-    response = await async_client.delete('/access/users/delete?username=nonexistent_user_12345', headers=admin_headers)
+    response = await async_client.delete(
+        '/access/users/delete?username=nonexistent_user_12345', headers=admin_headers
+    )
     assert response.status_code == 200
-
 
 
 async def test_user_deletion_no_auth(async_client):
@@ -243,8 +245,9 @@ async def test_change_password_success(async_client, admin_headers):
 
     finally:
         # Cleanup
-        await async_client.delete(f'/access/users/delete?username={username}', headers=admin_headers)
-
+        await async_client.delete(
+            f'/access/users/delete?username={username}', headers=admin_headers
+        )
 
 
 async def test_change_password_nonexistent_user(async_client, admin_headers):
@@ -258,7 +261,6 @@ async def test_change_password_nonexistent_user(async_client, admin_headers):
     assert 'does not exist' in response.json()['detail']
 
 
-
 async def test_change_password_no_auth(async_client):
     """Test password change fails without authentication."""
     response = await async_client.put(
@@ -266,7 +268,6 @@ async def test_change_password_no_auth(async_client):
         json={'username': 'admin', 'password': 'newpassword'},
     )
     assert response.status_code == 403  # Forbidden
-
 
 
 async def test_change_admin_password_as_standard_user(async_client, admin_headers):
@@ -311,7 +312,9 @@ async def test_change_admin_password_as_standard_user(async_client, admin_header
 
     finally:
         # Cleanup
-        await async_client.delete(f'/access/users/delete?username={username}', headers=admin_headers)
+        await async_client.delete(
+            f'/access/users/delete?username={username}', headers=admin_headers
+        )
 
 
 # === INTEGRATION TESTS ===
@@ -378,7 +381,9 @@ async def test_user_lifecycle(async_client, admin_headers):
 
     finally:
         # 8. Delete user (cleanup)
-        response = await async_client.delete(f'/access/users/delete?username={username}', headers=admin_headers)
+        response = await async_client.delete(
+            f'/access/users/delete?username={username}', headers=admin_headers
+        )
         assert response.status_code == 200
 
         # 9. Verify user no longer in list
@@ -414,13 +419,11 @@ async def test_refresh_token_success(async_client, admin_headers):
     assert len(new_token['token']) > 0
 
 
-
 async def test_refresh_token_invalid(async_client):
     """Test refresh token fails with invalid token."""
     invalid_headers = {'Authorization': 'Bearer invalid_token_12345'}
     response = await async_client.post('/access/users/refresh-token', headers=invalid_headers)
     assert response.status_code == 401
-
 
 
 async def test_refresh_token_no_auth(async_client):
@@ -442,7 +445,6 @@ async def test_create_user_invalid_json(async_client, admin_headers):
     assert response.status_code == 422  # Validation error
 
 
-
 async def test_change_password_invalid_json(async_client, admin_headers):
     """Test password change with invalid JSON data."""
     response = await async_client.put(
@@ -451,7 +453,6 @@ async def test_change_password_invalid_json(async_client, admin_headers):
         headers=admin_headers,
     )
     assert response.status_code == 422  # Validation error
-
 
 
 async def test_token_creation_invalid_json(async_client):
@@ -470,7 +471,6 @@ async def test_user_deletion_empty_username(async_client, admin_headers):
     """Test deletion with empty username."""
     response = await async_client.delete('/access/users/delete?username=', headers=admin_headers)
     assert response.status_code == 200  # Should be idempotent
-
 
 
 async def test_change_password_empty_username(async_client, admin_headers):
