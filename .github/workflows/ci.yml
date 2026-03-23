@@ -37,10 +37,13 @@ jobs:
       - name: Install Poetry and tooling
         run: |
           python -m pip install --upgrade pip
-          pip install poetry==2.1.2 ruff keyrings.alt
+          pip install poetry==2.1.2 ruff
 
       - name: Install project dependencies (server + tests)
         run: poetry install --with server,tests
+
+      - name: Install keyring backend in Poetry environment
+        run: poetry run pip install keyrings.alt
 
       - name: Prepare server environment file
         run: cp pytupli/server/env.template pytupli/server/.env
@@ -52,6 +55,8 @@ jobs:
         run: poetry run ruff format --diff --target-version=py312
 
       - name: Run tests
+        env:
+          PYTHON_KEYRING_BACKEND: keyrings.alt.file.PlaintextKeyring
         run: poetry run pytest tests --cov=pytupli --cov-report=term --cov-report=xml:coverage.xml
 
       - name: Upload coverage report
