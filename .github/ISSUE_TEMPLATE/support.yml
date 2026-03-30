@@ -1,0 +1,35 @@
+name: Question / support
+description: Ask a question or get help
+title: "[Question]: "
+labels: ["question"]
+
+body:
+  - type: textarea
+    id: question
+    attributes:
+      label: Your question
+      description: What do you need help with?
+      placeholder: Ask your question...
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Provide any relevant details, code snippets, or background.
+    validations:
+      required: false
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment (if relevant)
+      description: |
+        Provide details if your question is environment-specific.
+      placeholder: |
+        - OS:
+        - Version / commit:
+        - Dependencies:
+    validations:
+      required: false
