@@ -1138,38 +1138,38 @@ class FileStorage(TupliStorage):
                 return lambda item: any(f(item) for f in sub_filters)
 
             case FilterType.EQ:
-                return (
-                    lambda item: key_exists(item, filter_obj.key)
+                return lambda item: (
+                    key_exists(item, filter_obj.key)
                     and get_nested_value(item, filter_obj.key) == filter_obj.value
                 )
 
             case FilterType.GEQ:
-                return (
-                    lambda item: key_exists(item, filter_obj.key)
+                return lambda item: (
+                    key_exists(item, filter_obj.key)
                     and get_nested_value(item, filter_obj.key) >= filter_obj.value
                 )
 
             case FilterType.LEQ:
-                return (
-                    lambda item: key_exists(item, filter_obj.key)
+                return lambda item: (
+                    key_exists(item, filter_obj.key)
                     and get_nested_value(item, filter_obj.key) <= filter_obj.value
                 )
 
             case FilterType.GT:
-                return (
-                    lambda item: key_exists(item, filter_obj.key)
+                return lambda item: (
+                    key_exists(item, filter_obj.key)
                     and get_nested_value(item, filter_obj.key) > filter_obj.value
                 )
 
             case FilterType.LT:
-                return (
-                    lambda item: key_exists(item, filter_obj.key)
+                return lambda item: (
+                    key_exists(item, filter_obj.key)
                     and get_nested_value(item, filter_obj.key) < filter_obj.value
                 )
 
             case FilterType.NE:
-                return (
-                    lambda item: key_exists(item, filter_obj.key)
+                return lambda item: (
+                    key_exists(item, filter_obj.key)
                     and get_nested_value(item, filter_obj.key) != filter_obj.value
                 )
 

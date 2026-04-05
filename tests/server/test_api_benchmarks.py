@@ -25,7 +25,6 @@ async def test_benchmarks_create(async_client, sample_benchmark, admin_headers):
     assert response.status_code == 200
 
 
-
 async def test_benchmarks_create_benchmark_exists_publicly(
     async_client, published_benchmark_user1, standard_user2_headers, sample_benchmark
 ):
@@ -36,7 +35,6 @@ async def test_benchmarks_create_benchmark_exists_publicly(
     assert response.status_code == 409
 
 
-
 async def test_benchmarks_duplication(
     async_client, created_benchmark_admin, admin_headers, sample_benchmark
 ):
@@ -45,7 +43,6 @@ async def test_benchmarks_duplication(
     # Try creating it again - should fail with 409
     response, _ = await create_benchmark(async_client, sample_benchmark, admin_headers)
     assert response.status_code == 409
-
 
 
 async def test_benchmarks_load(created_benchmark_admin, async_client, admin_headers):
@@ -66,7 +63,6 @@ async def test_benchmarks_load(created_benchmark_admin, async_client, admin_head
     assert 'admin' in loaded_benchmark.published_in  # Benchmark is published in creator's group
 
 
-
 async def test_benchmarks_load_private_insufficient_rights(
     created_benchmark_admin, async_client, standard_user1_headers
 ):
@@ -75,7 +71,6 @@ async def test_benchmarks_load_private_insufficient_rights(
 
     response, _ = await load_benchmark(async_client, created_benchmark.id, standard_user1_headers)
     assert response.status_code == 403
-
 
 
 async def test_benchmarks_publish(created_benchmark_admin, async_client, admin_headers):
@@ -94,7 +89,6 @@ async def test_benchmarks_publish(created_benchmark_admin, async_client, admin_h
     assert 'global' in loaded_benchmark.published_in
 
 
-
 async def test_benchmarks_delete(created_benchmark_admin, async_client, admin_headers):
     # Get created benchmark
     _, created_benchmark = created_benchmark_admin
@@ -108,7 +102,6 @@ async def test_benchmarks_delete(created_benchmark_admin, async_client, admin_he
     assert response.status_code == 404
 
 
-
 async def test_delete_benchmark_guest_forbidden(created_benchmark_admin, async_client):
     # Get created benchmark
     _, created_benchmark = created_benchmark_admin
@@ -120,7 +113,6 @@ async def test_delete_benchmark_guest_forbidden(created_benchmark_admin, async_c
     assert delete_response.status_code == 403
 
 
-
 async def test_delete_benchmark_other_user_forbidden(
     async_client, created_benchmark_user1, standard_user2_headers
 ):
@@ -129,7 +121,6 @@ async def test_delete_benchmark_other_user_forbidden(
     # Try to delete with user 2 - should fail
     response = await delete_benchmark(async_client, created_benchmark.id, standard_user2_headers)
     assert response.status_code == 403
-
 
 
 async def test_benchmarks_list(
@@ -152,7 +143,6 @@ async def test_benchmarks_list(
     assert b2.id in admin_benchmark_ids
 
 
-
 async def test_delete_public_content(
     async_client, published_benchmark_user1, standard_user1_headers, admin_headers
 ):
@@ -164,13 +154,12 @@ async def test_delete_public_content(
     assert response.status_code == 200
 
 
-
 async def test_benchmarks_publish_in_user_group(
     async_client, created_benchmark_admin, admin_headers, standard_user1_headers
 ):
     """Test publishing a benchmark in a user-created group"""
     _, created_benchmark = created_benchmark_admin
-    test_group_name = "test_benchmark_group"
+    test_group_name = 'test_benchmark_group'
 
     try:
         # Create a test group
@@ -179,8 +168,13 @@ async def test_benchmarks_publish_in_user_group(
 
         # Add user1 to the group with CONTRIBUTOR role (which includes BENCHMARK_CREATE rights)
         from pytupli.schema import DEFAULT_ROLE
+
         membership_response = await add_user_to_group(
-            async_client, test_group_name, "test_user_1", admin_headers, [DEFAULT_ROLE.CONTRIBUTOR.value]
+            async_client,
+            test_group_name,
+            'test_user_1',
+            admin_headers,
+            [DEFAULT_ROLE.CONTRIBUTOR.value],
         )
         assert membership_response.status_code == 200
 
@@ -202,13 +196,12 @@ async def test_benchmarks_publish_in_user_group(
         await delete_group(async_client, admin_headers, test_group_name)
 
 
-
 async def test_benchmarks_publish_in_nonexistent_group(
     async_client, created_benchmark_admin, admin_headers
 ):
     """Test publishing a benchmark in a non-existent group (should fail)"""
     _, created_benchmark = created_benchmark_admin
-    nonexistent_group = "nonexistent_group"
+    nonexistent_group = 'nonexistent_group'
 
     # Try to publish in non-existent group (should fail)
     publish_response = await publish_benchmark(
@@ -217,16 +210,13 @@ async def test_benchmarks_publish_in_nonexistent_group(
     assert publish_response.status_code == 403  # Should fail due to lack of permissions
 
 
-
-async def test_benchmarks_unpublish_success(
-    async_client, created_benchmark_admin, admin_headers
-):
+async def test_benchmarks_unpublish_success(async_client, created_benchmark_admin, admin_headers):
     """Test successful unpublishing of a benchmark from global group"""
     _, created_benchmark = created_benchmark_admin
 
     # First publish the benchmark in global
     publish_response = await publish_benchmark(
-        async_client, created_benchmark.id, admin_headers, "global"
+        async_client, created_benchmark.id, admin_headers, 'global'
     )
     assert publish_response.status_code == 200
 
@@ -235,11 +225,11 @@ async def test_benchmarks_unpublish_success(
         async_client, created_benchmark.id, admin_headers
     )
     assert response.status_code == 200
-    assert "global" in loaded_benchmark.published_in
+    assert 'global' in loaded_benchmark.published_in
 
     # Unpublish from global
     unpublish_response = await unpublish_benchmark(
-        async_client, created_benchmark.id, admin_headers, "global"
+        async_client, created_benchmark.id, admin_headers, 'global'
     )
     assert unpublish_response.status_code == 200
 
@@ -248,8 +238,7 @@ async def test_benchmarks_unpublish_success(
         async_client, created_benchmark.id, admin_headers
     )
     assert response.status_code == 200
-    assert "global" not in loaded_benchmark.published_in
-
+    assert 'global' not in loaded_benchmark.published_in
 
 
 async def test_benchmarks_unpublish_insufficient_permissions(
@@ -260,16 +249,15 @@ async def test_benchmarks_unpublish_insufficient_permissions(
 
     # Admin publishes the benchmark in global
     publish_response = await publish_benchmark(
-        async_client, created_benchmark.id, admin_headers, "global"
+        async_client, created_benchmark.id, admin_headers, 'global'
     )
     assert publish_response.status_code == 200
 
     # User1 tries to unpublish (should fail - insufficient permissions)
     unpublish_response = await unpublish_benchmark(
-        async_client, created_benchmark.id, standard_user1_headers, "global"
+        async_client, created_benchmark.id, standard_user1_headers, 'global'
     )
     assert unpublish_response.status_code == 403  # Should fail due to insufficient permissions
-
 
 
 async def test_benchmarks_unpublish_from_user_group(
@@ -277,7 +265,7 @@ async def test_benchmarks_unpublish_from_user_group(
 ):
     """Test unpublishing from a user-created group"""
     _, created_benchmark = created_benchmark_admin
-    test_group_name = "test_unpublish_group"
+    test_group_name = 'test_unpublish_group'
 
     try:
         # Create a test group
@@ -286,9 +274,13 @@ async def test_benchmarks_unpublish_from_user_group(
 
         # Add user1 to the group with CONTENT_ADMIN role (which includes both BENCHMARK_CREATE and BENCHMARK_DELETE rights)
         from pytupli.schema import DEFAULT_ROLE
+
         membership_response = await add_user_to_group(
-            async_client, test_group_name, "test_user_1", admin_headers,
-            [DEFAULT_ROLE.CONTENT_ADMIN.value]
+            async_client,
+            test_group_name,
+            'test_user_1',
+            admin_headers,
+            [DEFAULT_ROLE.CONTENT_ADMIN.value],
         )
         assert membership_response.status_code == 200
 

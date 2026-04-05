@@ -26,6 +26,7 @@ import datetime
 
 pytestmark = pytest.mark.anyio
 
+
 @pytest.fixture(scope='session')  # fixture to configure asyncio in pytest
 def anyio_backend():
     return 'asyncio'
@@ -83,7 +84,9 @@ async def standard_user2_headers(async_client, admin_headers):
 
 
 async def get_JWT_token(async_client, user='admin', password='pytupli'):
-    r = await async_client.post('/access/users/token', json={'username': user, 'password': password})
+    r = await async_client.post(
+        '/access/users/token', json={'username': user, 'password': password}
+    )
     r.raise_for_status()
     return r.json()['access_token']['token']
 
@@ -266,7 +269,8 @@ async def publish_benchmark(async_client, benchmark_id, headers, publish_in='glo
 async def unpublish_benchmark(async_client, benchmark_id, headers, unpublish_from='global'):
     """Unpublish a benchmark and return the response"""
     return await async_client.put(
-        f'/benchmarks/unpublish?benchmark_id={benchmark_id}&unpublish_from={unpublish_from}', headers=headers
+        f'/benchmarks/unpublish?benchmark_id={benchmark_id}&unpublish_from={unpublish_from}',
+        headers=headers,
     )
 
 
@@ -288,7 +292,7 @@ async def delete_benchmark(async_client, benchmark_id, headers):
 
 
 # Group helper functions
-async def create_group(async_client, group_name, headers, description="Test group"):
+async def create_group(async_client, group_name, headers, description='Test group'):
     """Create a group and return the response"""
     group = Group(name=group_name, description=description)
     return await async_client.post(
@@ -309,11 +313,7 @@ async def add_user_to_group(async_client, group_name, username, headers, roles=N
         roles = ['contributor']  # Default role
 
     membership = GroupMembershipQuery(
-        group_name=group_name,
-        members=[GroupMembership(
-            user=username,
-            roles=roles
-        )]
+        group_name=group_name, members=[GroupMembership(user=username, roles=roles)]
     )
     return await async_client.post(
         '/access/groups/add-members', json=membership.model_dump(), headers=headers
@@ -516,12 +516,17 @@ async def download_artifact(async_client, artifact_id, headers=None):
 
 async def publish_artifact(async_client, artifact_id, headers, publish_in='global'):
     """Publish a artifact and return the response"""
-    return await async_client.put(f'/artifacts/publish?artifact_id={artifact_id}&publish_in={publish_in}', headers=headers)
+    return await async_client.put(
+        f'/artifacts/publish?artifact_id={artifact_id}&publish_in={publish_in}', headers=headers
+    )
 
 
 async def unpublish_artifact(async_client, artifact_id, headers, unpublish_from='global'):
     """Unpublish an artifact and return the response"""
-    return await async_client.put(f'/artifacts/unpublish?artifact_id={artifact_id}&unpublish_from={unpublish_from}', headers=headers)
+    return await async_client.put(
+        f'/artifacts/unpublish?artifact_id={artifact_id}&unpublish_from={unpublish_from}',
+        headers=headers,
+    )
 
 
 async def delete_artifact(async_client, artifact_id, headers):
