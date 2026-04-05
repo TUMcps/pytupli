@@ -83,7 +83,7 @@ def test_list_benchmarks_with_filter(storage, sample_benchmark_stored):
 def test_list_episodes_with_nested_filter(storage, sample_benchmark_stored, sample_episode_stored):
     """Test listing episodes with a nested filter."""
     # Create a filter
-    episode_filter = FilterEQ(key='id', value=sample_episode_stored.id)
+    episode_filter = FilterEQ(key='id', value=sample_episode_stored)
     # benchmark id filter
     benchmark_filter = FilterEQ(key='benchmark_id', value=sample_benchmark_stored)
     # nested filter combining both
@@ -294,25 +294,6 @@ def test_list_episodes_with_filter(storage, sample_episode_stored):
 
 
 @pytest.mark.parametrize('storage', STORAGE_TYPES, indirect=True)
-def test_list_episodes_with_nested_filter(storage, sample_benchmark_stored, sample_episode_stored, sample_episode_2_stored):
-    """Test listing episodes with a nested filter."""
-    # Create a filter
-    episode_filter = FilterEQ(key='id', value=sample_episode_stored)
-    # benchmark id filter
-    benchmark_filter = FilterEQ(key='benchmark_id', value=sample_benchmark_stored)
-    # nested filter combining both
-    nested_filter = episode_filter & benchmark_filter
-    # Execute list_episodes with filter
-    episode_list = storage.list_episodes(filter=nested_filter)
-    # Verify results
-    assert episode_list is not None
-    assert isinstance(episode_list, list)
-    assert len(episode_list) == 1, 'Expected exactly one episode matching filter'
-    assert isinstance(episode_list[0], EpisodeHeader)
-    assert episode_list[0].metadata.get('agent') == 'test_agent'
-
-
-@pytest.mark.parametrize('storage', STORAGE_TYPES, indirect=True)
 def test_publish_episode(storage, sample_episode_stored):
     """Test publishing an episode."""
     episode_id = sample_episode_stored
@@ -345,7 +326,9 @@ def test_publish_episode(storage, sample_episode_stored):
         if len(episode_list) > 0:
             # Only assert if we can actually get the episode's published status
             if hasattr(episode_list[0], 'published_in'):
-                assert 'global' in episode_list[0].published_in, 'Episode was not published successfully'
+                assert 'global' in episode_list[0].published_in, (
+                    'Episode was not published successfully'
+                )
 
 
 @pytest.mark.parametrize('storage', STORAGE_TYPES, indirect=True)
@@ -362,7 +345,9 @@ def test_unpublish_benchmark(storage, sample_benchmark_stored):
             storage.unpublish_benchmark(benchmark_id, 'global')
             # If successful, verify the benchmark is no longer in the global group
             loaded_benchmark = storage.load_benchmark(benchmark_id)
-            assert 'global' not in loaded_benchmark.published_in, 'Benchmark was not unpublished successfully'
+            assert 'global' not in loaded_benchmark.published_in, (
+                'Benchmark was not unpublished successfully'
+            )
         except TupliStorageError as e:
             # Permission errors are expected for non-admin users trying to unpublish from global
             # The important thing is that the method exists and makes the correct API call
@@ -387,7 +372,9 @@ def test_unpublish_artifact(storage, sample_artifact_stored):
             # If successful, verify the artifact is no longer in the global group
             artifact_list = storage.list_artifacts(filter=FilterEQ(key='id', value=artifact_id))
             assert len(artifact_list) == 1, "Couldn't find the artifact"
-            assert 'global' not in artifact_list[0].published_in, 'Artifact was not unpublished successfully'
+            assert 'global' not in artifact_list[0].published_in, (
+                'Artifact was not unpublished successfully'
+            )
         except TupliStorageError as e:
             # Permission errors are expected for non-admin users trying to unpublish from global
             if 'Forbidden' in str(e) or '403' in str(e):
@@ -429,7 +416,9 @@ def test_unpublish_episode(storage, sample_episode_stored):
             episode_filter = FilterEQ(key='id', value=episode_id)
             episode_list = storage.list_episodes(filter=episode_filter)
             if len(episode_list) > 0 and hasattr(episode_list[0], 'published_in'):
-                assert 'global' not in episode_list[0].published_in, 'Episode was not unpublished successfully'
+                assert 'global' not in episode_list[0].published_in, (
+                    'Episode was not unpublished successfully'
+                )
         except TupliStorageError as e:
             # Permission errors are expected for non-admin users trying to unpublish from global
             if 'Forbidden' in str(e) or '403' in str(e):

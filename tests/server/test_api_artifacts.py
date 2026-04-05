@@ -13,6 +13,7 @@ from pytupli.schema import ArtifactMetadataItem
 
 pytestmark = pytest.mark.anyio
 
+
 async def test_artifact_upload(async_client, sample_artifact, admin_headers):
     data, _, expected_hash, metadata = sample_artifact
     response, uploaded_id = await upload_artifact(
@@ -23,7 +24,6 @@ async def test_artifact_upload(async_client, sample_artifact, admin_headers):
     assert uploaded_id is not None
 
     await delete_artifact(async_client, uploaded_id, headers=admin_headers)
-
 
 
 async def test_artifact_duplicate_upload(
@@ -38,7 +38,6 @@ async def test_artifact_duplicate_upload(
     assert response.status_code == 200
 
 
-
 async def test_artifact_download(async_client, uploaded_artifact_admin, admin_headers):
     _, data_id, _, _, up_metadata = uploaded_artifact_admin
 
@@ -49,7 +48,6 @@ async def test_artifact_download(async_client, uploaded_artifact_admin, admin_he
 
     assert down_metadata.name == up_metadata.name
     assert down_metadata.description == up_metadata.description
-
 
 
 async def test_artifact_download_insufficient_rights(
@@ -63,13 +61,11 @@ async def test_artifact_download_insufficient_rights(
     assert response.status_code == 403
 
 
-
 async def test_artifact_download_non_existing(async_client, admin_headers):
     response, _, _, _ = await download_artifact(
         async_client, 'non_existing_id', headers=admin_headers
     )
     assert response.status_code == 404
-
 
 
 async def test_artifact_list_insufficient_rights(
@@ -81,7 +77,6 @@ async def test_artifact_list_insufficient_rights(
     assert len(artifacts) == 0
 
 
-
 async def test_artifact_delete(async_client, uploaded_artifact_admin, admin_headers):
     _, data_id, _, _, _ = uploaded_artifact_admin
     response = await delete_artifact(async_client, data_id, headers=admin_headers)
@@ -89,7 +84,6 @@ async def test_artifact_delete(async_client, uploaded_artifact_admin, admin_head
 
     response, _, _, _ = await download_artifact(async_client, data_id, headers=admin_headers)
     assert response.status_code == 404
-
 
 
 async def test_artifact_published_list(
@@ -108,13 +102,12 @@ async def test_artifact_published_list(
     assert artifacts[0].id == data_id
 
 
-
 async def test_artifact_publish_in_user_group(
     async_client, uploaded_artifact_admin, admin_headers, standard_user1_headers
 ):
     """Test publishing an artifact in a user-created group"""
     _, artifact_id, _, _, _ = uploaded_artifact_admin
-    test_group_name = "test_artifact_group"
+    test_group_name = 'test_artifact_group'
 
     try:
         # Create a test group
@@ -123,7 +116,7 @@ async def test_artifact_publish_in_user_group(
 
         # Add user1 to the group with default roles (should include ARTIFACT_CREATE)
         membership_response = await add_user_to_group(
-            async_client, test_group_name, "test_user_1", admin_headers
+            async_client, test_group_name, 'test_user_1', admin_headers
         )
         assert membership_response.status_code == 200
 
@@ -145,13 +138,12 @@ async def test_artifact_publish_in_user_group(
         await delete_group(async_client, admin_headers, test_group_name)
 
 
-
 async def test_artifact_publish_in_nonexistent_group(
     async_client, uploaded_artifact_admin, admin_headers
 ):
     """Test publishing an artifact in a non-existent group (should fail)"""
     _, artifact_id, _, _, _ = uploaded_artifact_admin
-    nonexistent_group = "nonexistent_group"
+    nonexistent_group = 'nonexistent_group'
 
     # Try to publish in non-existent group (should fail)
     publish_response = await publish_artifact(
@@ -160,17 +152,12 @@ async def test_artifact_publish_in_nonexistent_group(
     assert publish_response.status_code == 403  # Should fail due to lack of permissions
 
 
-
-async def test_artifact_unpublish_success(
-    async_client, uploaded_artifact_admin, admin_headers
-):
+async def test_artifact_unpublish_success(async_client, uploaded_artifact_admin, admin_headers):
     """Test successful unpublishing of an artifact from global group"""
     _, artifact_id, _, _, _ = uploaded_artifact_admin
 
     # First publish the artifact in global
-    publish_response = await publish_artifact(
-        async_client, artifact_id, admin_headers, "global"
-    )
+    publish_response = await publish_artifact(async_client, artifact_id, admin_headers, 'global')
     assert publish_response.status_code == 200
 
     # Verify it's published (visible in list)
@@ -182,14 +169,13 @@ async def test_artifact_unpublish_success(
 
     # Unpublish from global
     unpublish_response = await unpublish_artifact(
-        async_client, artifact_id, admin_headers, "global"
+        async_client, artifact_id, admin_headers, 'global'
     )
     assert unpublish_response.status_code == 200
 
     # Verify it's no longer published in global (not visible in general list)
     # Note: This depends on the exact implementation of the list endpoint
     # You may need to adjust this assertion based on your actual API behavior
-
 
 
 async def test_artifact_unpublish_insufficient_permissions(
@@ -199,14 +185,12 @@ async def test_artifact_unpublish_insufficient_permissions(
     _, artifact_id, _, _, _ = uploaded_artifact_admin
 
     # Admin publishes the artifact in global
-    publish_response = await publish_artifact(
-        async_client, artifact_id, admin_headers, "global"
-    )
+    publish_response = await publish_artifact(async_client, artifact_id, admin_headers, 'global')
     assert publish_response.status_code == 200
 
     # User1 tries to unpublish (should fail - insufficient permissions)
     unpublish_response = await unpublish_artifact(
-        async_client, artifact_id, standard_user1_headers, "global"
+        async_client, artifact_id, standard_user1_headers, 'global'
     )
     assert unpublish_response.status_code == 403  # Should fail due to insufficient permissions
 

@@ -1,4 +1,5 @@
 """Test methods of quality_metrics module."""
+
 import pytest
 import numpy as np
 import gymnasium as gym
@@ -9,12 +10,13 @@ from pytupli.quality_metrics import (
     EstimatedReturnImprovementMetric,
     GeneralizedBehavioralEntropyMetric,
     QFunctionMetric,
-    MLP
+    MLP,
 )
 
 # Optional imports for testing
 try:
     import torch
+
     TORCH_AVAILABLE = True
 except ImportError:
     TORCH_AVAILABLE = False
@@ -23,6 +25,7 @@ except ImportError:
 # ============================================================================
 # Base QualityMetric Tests
 # ============================================================================
+
 
 def test_quality_metric_base_class():
     """Test that base QualityMetric class raises NotImplementedError."""
@@ -38,13 +41,14 @@ def test_quality_metric_base_class():
         storage = FileStorage(storage_base_dir=tmpdir)
         dataset = TupliDataset(storage)
 
-        with pytest.raises(NotImplementedError, match="Subclasses should implement this method"):
+        with pytest.raises(NotImplementedError, match='Subclasses should implement this method'):
             metric.evaluate(dataset)
 
 
 # ============================================================================
 # SACoMetric Tests
 # ============================================================================
+
 
 def test_saco_metric_initialization(test_env):
     """Test basic initialization of SACoMetric."""
@@ -77,7 +81,7 @@ def test_saco_metric_with_reference(loaded_dataset, test_env):
         environment=test_env,
         reference_states=reference_states,
         reference_actions=reference_actions,
-        use_hyperloglog=False
+        use_hyperloglog=False,
     )
     saco_score = metric.evaluate(loaded_dataset)
 
@@ -113,12 +117,14 @@ def test_saco_count_exact_method(test_env):
     metric = SACoMetric(environment=test_env, use_hyperloglog=False)
 
     # Create test data with known unique state-action pairs
-    state_actions = np.array([
-        [0, 0, 1],  # state [0, 0], action 1
-        [0, 1, 0],  # state [0, 1], action 0
-        [0, 0, 1],  # duplicate
-        [1, 0, 1],  # state [1, 0], action 1
-    ])
+    state_actions = np.array(
+        [
+            [0, 0, 1],  # state [0, 0], action 1
+            [0, 1, 0],  # state [0, 1], action 0
+            [0, 0, 1],  # duplicate
+            [1, 0, 1],  # state [1, 0], action 1
+        ]
+    )
 
     count = metric._count_exact(state_actions)
     assert count == 3  # 3 unique state-action pairs
@@ -129,12 +135,14 @@ def test_saco_count_hyperloglog_method(test_env):
     metric = SACoMetric(environment=test_env, use_hyperloglog=True)
 
     # Create test data
-    state_actions = np.array([
-        [0, 0, 1],
-        [0, 1, 0],
-        [0, 0, 1],  # duplicate
-        [1, 0, 1],
-    ])
+    state_actions = np.array(
+        [
+            [0, 0, 1],
+            [0, 1, 0],
+            [0, 0, 1],  # duplicate
+            [1, 0, 1],
+        ]
+    )
 
     count = metric._count_with_hyperloglog(state_actions)
     # Should be approximately 3 (within HyperLogLog error)
@@ -144,7 +152,7 @@ def test_saco_count_hyperloglog_method(test_env):
 def test_saco_with_preprocessor_requires_torch(test_env):
     """Test that SACoMetric with preprocessor requires torch when used."""
     if TORCH_AVAILABLE:
-        pytest.skip("PyTorch is available, skipping unavailability test")
+        pytest.skip('PyTorch is available, skipping unavailability test')
 
     # Create a mock preprocessor
     class MockPreprocessor:
@@ -152,13 +160,11 @@ def test_saco_with_preprocessor_requires_torch(test_env):
             return x
 
     metric = SACoMetric(
-        environment=test_env,
-        use_hyperloglog=False,
-        observation_preprocessor=MockPreprocessor()
+        environment=test_env, use_hyperloglog=False, observation_preprocessor=MockPreprocessor()
     )
 
     # Create minimal dataset
-    from pytupli.schema import Episode, RLTuple, FilterEQ
+    from pytupli.schema import FilterEQ
     from pytupli.storage import FileStorage
     import tempfile
 
@@ -169,17 +175,19 @@ def test_saco_with_preprocessor_requires_torch(test_env):
 
         env = SimpleTestEnv()
         benchmark = TupliEnvWrapper(env, storage)
-        benchmark.store(name="Test", description="Test", difficulty="easy", version="1.0")
+        benchmark.store(name='Test', description='Test', difficulty='easy', version='1.0')
 
         obs, _ = benchmark.reset()
         benchmark.step(np.int64(1))
 
         dataset = TupliDataset(storage)
-        dataset = dataset.with_benchmark_filter(FilterEQ(key="id", value=benchmark.id))
+        dataset = dataset.with_benchmark_filter(FilterEQ(key='id', value=benchmark.id))
         dataset.load()
 
         # Should raise ImportError when trying to use preprocessor
-        with pytest.raises(ImportError, match="PyTorch is required when using observation_preprocessor"):
+        with pytest.raises(
+            ImportError, match='PyTorch is required when using observation_preprocessor'
+        ):
             metric.evaluate(dataset)
 
         benchmark.delete(delete_episodes=True)
@@ -188,6 +196,7 @@ def test_saco_with_preprocessor_requires_torch(test_env):
 def test_saco_reference_states_reshape():
     """Test that reference states and actions are properly reshaped."""
     from tests.client.example_envs import SimpleTestEnv
+
     env = SimpleTestEnv()
 
     # Test with 1D arrays that should be reshaped
@@ -198,7 +207,7 @@ def test_saco_reference_states_reshape():
         environment=env,
         reference_states=ref_states,
         reference_actions=ref_actions,
-        use_hyperloglog=False
+        use_hyperloglog=False,
     )
 
     # Check that they were reshaped to 2D
@@ -211,6 +220,7 @@ def test_saco_reference_states_reshape():
 # ============================================================================
 # AverageReturnMetric Tests
 # ============================================================================
+
 
 def test_average_return_metric_initialization():
     """Test basic initialization of AverageReturnMetric."""
@@ -305,6 +315,7 @@ def test_average_return_normalization_negative_range():
 # EstimatedReturnImprovementMetric Tests
 # ============================================================================
 
+
 def test_eri_metric_initialization():
     """Test basic initialization of EstimatedReturnImprovementMetric."""
     metric = EstimatedReturnImprovementMetric(gamma=0.95, min_return=-10.0)
@@ -335,7 +346,6 @@ def test_eri_metric_auto_min(loaded_varied_dataset):
 def test_eri_metric_uniform_returns():
     """Test ERI with uniform returns (should be zero)."""
     # Create a mock dataset with uniform returns
-    from pytupli.schema import Episode, RLTuple
     from pytupli.storage import FileStorage
     import tempfile
 
@@ -346,7 +356,7 @@ def test_eri_metric_uniform_returns():
 
         env = SimpleTestEnv()
         benchmark = TupliEnvWrapper(env, storage)
-        benchmark.store(name="Uniform Test", description="Test", difficulty="easy", version="1.0")
+        benchmark.store(name='Uniform Test', description='Test', difficulty='easy', version='1.0')
 
         # Create episodes with same total reward
         for _ in range(3):
@@ -355,8 +365,9 @@ def test_eri_metric_uniform_returns():
             benchmark.step(np.int64(1))
 
         from pytupli.schema import FilterEQ
+
         dataset = TupliDataset(storage)
-        dataset = dataset.with_benchmark_filter(FilterEQ(key="id", value=benchmark.id))
+        dataset = dataset.with_benchmark_filter(FilterEQ(key='id', value=benchmark.id))
         dataset.load()
 
         metric = EstimatedReturnImprovementMetric(gamma=1.0, min_return=0.0)
@@ -380,7 +391,7 @@ def test_eri_metric_with_varied_returns():
 
         env = SimpleTestEnv()
         benchmark = TupliEnvWrapper(env, storage)
-        benchmark.store(name="Varied Test", description="Test", difficulty="easy", version="1.0")
+        benchmark.store(name='Varied Test', description='Test', difficulty='easy', version='1.0')
 
         # Create episodes with different total rewards
         # Episode 1: High reward
@@ -398,8 +409,9 @@ def test_eri_metric_with_varied_returns():
                 break
 
         from pytupli.schema import FilterEQ
+
         dataset = TupliDataset(storage)
-        dataset = dataset.with_benchmark_filter(FilterEQ(key="id", value=benchmark.id))
+        dataset = dataset.with_benchmark_filter(FilterEQ(key='id', value=benchmark.id))
         dataset.load()
 
         metric = EstimatedReturnImprovementMetric(gamma=1.0, min_return=0.0)
@@ -423,7 +435,7 @@ def test_eri_metric_gamma_effect():
 
         env = SimpleTestEnv()
         benchmark = TupliEnvWrapper(env, storage)
-        benchmark.store(name="Gamma Test", description="Test", difficulty="easy", version="1.0")
+        benchmark.store(name='Gamma Test', description='Test', difficulty='easy', version='1.0')
 
         # Create a few episodes
         for _ in range(3):
@@ -434,8 +446,9 @@ def test_eri_metric_gamma_effect():
                     break
 
         from pytupli.schema import FilterEQ
+
         dataset = TupliDataset(storage)
-        dataset = dataset.with_benchmark_filter(FilterEQ(key="id", value=benchmark.id))
+        dataset = dataset.with_benchmark_filter(FilterEQ(key='id', value=benchmark.id))
         dataset.load()
 
         metric_high_gamma = EstimatedReturnImprovementMetric(gamma=0.99)
@@ -455,14 +468,10 @@ def test_eri_metric_gamma_effect():
 # GeneralizedBehavioralEntropyMetric Tests
 # ============================================================================
 
+
 def test_gbe_metric_initialization():
     """Test basic initialization of GeneralizedBehavioralEntropyMetric."""
-    metric = GeneralizedBehavioralEntropyMetric(
-        rep_dim=2,
-        alpha=0.7,
-        num_knn=5,
-        device='cpu'
-    )
+    metric = GeneralizedBehavioralEntropyMetric(rep_dim=2, alpha=0.7, num_knn=5, device='cpu')
     assert metric.rep_dim == 2
     assert metric.alpha == 0.7
     assert metric.num_knn == 5
@@ -476,7 +485,7 @@ def test_gbe_metric_evaluation(loaded_dataset):
         rep_dim=2,
         alpha=1.0,  # Shannon entropy
         num_knn=3,  # Small k for small dataset
-        device='cpu'
+        device='cpu',
     )
     gbe_score = metric.evaluate(loaded_dataset)
 
@@ -508,22 +517,20 @@ def test_gbe_metric_different_alpha(loaded_varied_dataset):
 def test_gbe_metric_with_knn_avg(loaded_dataset):
     """Test GBE with k-NN averaging enabled."""
     metric = GeneralizedBehavioralEntropyMetric(
-        rep_dim=2,
-        alpha=0.7,
-        num_knn=3,
-        use_knn_avg=True,
-        device='cpu'
+        rep_dim=2, alpha=0.7, num_knn=3, use_knn_avg=True, device='cpu'
     )
     gbe_score = metric.evaluate(loaded_dataset)
 
     assert isinstance(gbe_score, float)
     assert gbe_score >= 0.0
 
+
 # ============================================================================
 # QFunctionMetric Tests
 # ============================================================================
 
-@pytest.mark.skipif(not TORCH_AVAILABLE, reason="PyTorch not installed")
+
+@pytest.mark.skipif(not TORCH_AVAILABLE, reason='PyTorch not installed')
 def test_q_function_metric_initialization(test_env):
     """Test basic initialization of QFunctionMetric."""
     network_kwargs = {'in_dim': 2, 'out_dim': 2, 'hidden': (64,)}
@@ -536,7 +543,7 @@ def test_q_function_metric_initialization(test_env):
         lr=3e-4,
         batch_size=32,
         iterations=100,  # Small for testing
-        device='cpu'
+        device='cpu',
     )
 
     assert metric.gamma == 0.99
@@ -546,7 +553,7 @@ def test_q_function_metric_initialization(test_env):
     assert metric.discrete_actions is True
 
 
-@pytest.mark.skipif(not TORCH_AVAILABLE, reason="PyTorch not installed")
+@pytest.mark.skipif(not TORCH_AVAILABLE, reason='PyTorch not installed')
 def test_q_function_metric_evaluation(loaded_varied_dataset, test_env):
     """Test Q-function metric evaluation (with very few iterations for speed)."""
     network_kwargs = {'in_dim': 2, 'out_dim': 2, 'hidden': (32,)}
@@ -560,7 +567,7 @@ def test_q_function_metric_evaluation(loaded_varied_dataset, test_env):
         batch_size=8,
         iterations=50,  # Very small for quick test
         target_update_rate=0.01,
-        device='cpu'
+        device='cpu',
     )
 
     q_value = metric.evaluate(loaded_varied_dataset)
@@ -569,7 +576,7 @@ def test_q_function_metric_evaluation(loaded_varied_dataset, test_env):
     assert isinstance(q_value, float)
 
 
-@pytest.mark.skipif(not TORCH_AVAILABLE, reason="PyTorch not installed")
+@pytest.mark.skipif(not TORCH_AVAILABLE, reason='PyTorch not installed')
 def test_mlp_network():
     """Test the MLP network used by Q-function metric."""
     mlp = MLP(in_dim=4, out_dim=2, hidden=(64, 64))
@@ -582,7 +589,7 @@ def test_mlp_network():
     assert isinstance(output, torch.Tensor)
 
 
-@pytest.mark.skipif(not TORCH_AVAILABLE, reason="PyTorch not installed")
+@pytest.mark.skipif(not TORCH_AVAILABLE, reason='PyTorch not installed')
 def test_q_function_sample_batch(loaded_varied_dataset, test_env):
     """Test batch sampling from Q-function metric."""
     network_kwargs = {'in_dim': 2, 'out_dim': 2, 'hidden': (32,)}
@@ -593,7 +600,7 @@ def test_q_function_sample_batch(loaded_varied_dataset, test_env):
         network_kwargs=network_kwargs,
         batch_size=4,
         iterations=10,
-        device='cpu'
+        device='cpu',
     )
 
     # Convert dataset to d4rl format for sampling
@@ -612,6 +619,7 @@ def test_q_function_sample_batch(loaded_varied_dataset, test_env):
 # ============================================================================
 # Integration Tests
 # ============================================================================
+
 
 def test_multiple_metrics_on_same_dataset(loaded_varied_dataset, test_env):
     """Test that multiple metrics can be applied to the same dataset."""
@@ -651,7 +659,7 @@ def test_all_metrics_with_torch(loaded_varied_dataset, test_env):
         network_kwargs=network_kwargs,
         iterations=20,
         batch_size=4,
-        device='cpu'
+        device='cpu',
     )
     q_value = q_func.evaluate(loaded_varied_dataset)
 
@@ -666,14 +674,14 @@ def test_metrics_with_empty_dataset_raise_error(test_storage):
 
     # AverageReturnMetric should assert on empty episodes
     metric = AverageReturnMetric()
-    with pytest.raises(AssertionError, match="Dataset must contain episodes"):
+    with pytest.raises(AssertionError, match='Dataset must contain episodes'):
         metric.evaluate(empty_dataset)
 
 
 def test_torch_metrics_fail_gracefully_without_torch():
     """Test that torch-dependent metrics raise ImportError when torch is unavailable."""
     if TORCH_AVAILABLE:
-        pytest.skip("PyTorch is available, skipping unavailability test")
+        pytest.skip('PyTorch is available, skipping unavailability test')
 
     # Test GeneralizedBehavioralEntropyMetric without encoder should work
     metric = GeneralizedBehavioralEntropyMetric(rep_dim=2)
@@ -681,13 +689,12 @@ def test_torch_metrics_fail_gracefully_without_torch():
     assert metric.observation_encoder is None
 
     # Test MLP
-    with pytest.raises(ImportError, match="PyTorch is required"):
+    with pytest.raises(ImportError, match='PyTorch is required'):
         MLP(in_dim=4, out_dim=2)
 
     # Test QFunctionMetric
-    import gymnasium as gym
     env = gym.make('CartPole-v1')
-    with pytest.raises(ImportError, match="PyTorch is required"):
+    with pytest.raises(ImportError, match='PyTorch is required'):
         QFunctionMetric(
             env=env,
             network_arch=MLP,
@@ -695,7 +702,7 @@ def test_torch_metrics_fail_gracefully_without_torch():
         )
 
 
-@pytest.mark.skipif(not TORCH_AVAILABLE, reason="PyTorch not installed")
+@pytest.mark.skipif(not TORCH_AVAILABLE, reason='PyTorch not installed')
 def test_gbe_metric_with_encoder_requires_torch():
     """Test that GBE with encoder requires torch."""
     import torch.nn as nn
@@ -712,6 +719,7 @@ def test_gbe_metric_with_encoder_requires_torch():
     encoder = DummyEncoder()
     metric = GeneralizedBehavioralEntropyMetric(rep_dim=2, observation_encoder=encoder)
     assert metric.observation_encoder is not None
+
 
 def test_multiple_metrics_different_parameters(loaded_varied_dataset):
     """Test multiple instantiations of same metric with different parameters."""
@@ -742,7 +750,7 @@ def test_saco_with_2d_reference_arrays(test_env):
         environment=test_env,
         reference_states=ref_states,
         reference_actions=ref_actions,
-        use_hyperloglog=False
+        use_hyperloglog=False,
     )
 
     # Should not reshape since already 2D
@@ -763,31 +771,39 @@ def test_eri_with_all_negative_returns():
 
         env = SimpleTestEnv()
         benchmark = TupliEnvWrapper(env, storage)
-        benchmark.store(name="Negative Test", description="Test", difficulty="easy", version="1.0")
+        benchmark.store(name='Negative Test', description='Test', difficulty='easy', version='1.0')
 
         # Manually create episodes with negative rewards
         episode1 = Episode(
             benchmark_id=benchmark.id,
             metadata={},
             tuples=[
-                RLTuple(state={'x': 0}, action=0, reward=-2.0, info={}, terminal=False, timeout=False),
-                RLTuple(state={'x': 1}, action=0, reward=-1.0, info={}, terminal=True, timeout=False),
-            ]
+                RLTuple(
+                    state={'x': 0}, action=0, reward=-2.0, info={}, terminal=False, timeout=False
+                ),
+                RLTuple(
+                    state={'x': 1}, action=0, reward=-1.0, info={}, terminal=True, timeout=False
+                ),
+            ],
         )
         episode2 = Episode(
             benchmark_id=benchmark.id,
             metadata={},
             tuples=[
-                RLTuple(state={'x': 0}, action=0, reward=-5.0, info={}, terminal=False, timeout=False),
-                RLTuple(state={'x': 1}, action=0, reward=-3.0, info={}, terminal=True, timeout=False),
-            ]
+                RLTuple(
+                    state={'x': 0}, action=0, reward=-5.0, info={}, terminal=False, timeout=False
+                ),
+                RLTuple(
+                    state={'x': 1}, action=0, reward=-3.0, info={}, terminal=True, timeout=False
+                ),
+            ],
         )
 
         storage.record_episode(episode1)
         storage.record_episode(episode2)
 
         dataset = TupliDataset(storage)
-        dataset = dataset.with_benchmark_filter(FilterEQ(key="id", value=benchmark.id))
+        dataset = dataset.with_benchmark_filter(FilterEQ(key='id', value=benchmark.id))
         dataset.load()
 
         # ERI with known negative minimum
@@ -812,7 +828,7 @@ def test_average_return_single_episode():
 
         env = SimpleTestEnv()
         benchmark = TupliEnvWrapper(env, storage)
-        benchmark.store(name="Single Episode", description="Test", difficulty="easy", version="1.0")
+        benchmark.store(name='Single Episode', description='Test', difficulty='easy', version='1.0')
 
         # Record one episode
         obs, _ = benchmark.reset()
@@ -820,8 +836,9 @@ def test_average_return_single_episode():
         benchmark.step(np.int64(1))
 
         from pytupli.schema import FilterEQ
+
         dataset = TupliDataset(storage)
-        dataset = dataset.with_benchmark_filter(FilterEQ(key="id", value=benchmark.id))
+        dataset = dataset.with_benchmark_filter(FilterEQ(key='id', value=benchmark.id))
         dataset.load()
 
         metric = AverageReturnMetric(gamma=0.99)
@@ -833,11 +850,13 @@ def test_average_return_single_episode():
         benchmark.delete(delete_episodes=True)
 
 
-def test_saco_assertion_for_discrete_actions(test_env):
+def test_saco_assertion_for_discrete_actions(test_env_continuous):
     """Test that SACoMetric asserts discrete action space."""
     # The test_env should have discrete actions, so this should pass
-    metric = SACoMetric(environment=test_env, use_hyperloglog=False)
-    assert isinstance(test_env.action_space, gym.spaces.Discrete)
+    with pytest.raises(
+        AssertionError, match='SACo currently only supports discrete action spaces.'
+    ):
+        SACoMetric(environment=test_env_continuous, use_hyperloglog=False)
 
 
 if __name__ == '__main__':

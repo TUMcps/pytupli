@@ -34,7 +34,6 @@ async def test_episodes_record(async_client, sample_episode, admin_headers):
     assert delete_response.status_code == 200
 
 
-
 async def test_episodes_record_nonexistent_benchmark(async_client, sample_episode, admin_headers):
     """Test recording an episode for a nonexistent benchmark"""
     # Modify the benchmark_id to something that doesn't exist
@@ -42,7 +41,6 @@ async def test_episodes_record_nonexistent_benchmark(async_client, sample_episod
 
     response, _ = await record_episode(async_client, sample_episode, admin_headers)
     assert response.status_code == 404
-
 
 
 async def test_episodes_record_private_benchmark_other_user(
@@ -62,12 +60,10 @@ async def test_episodes_record_private_benchmark_other_user(
     await delete_episode(async_client, episode_id=episode.id, headers=standard_user2_headers)
 
 
-
 async def test_episodes_record_guest_user(async_client, sample_episode):
     """Test recording episodes as a guest user (unauthorized)"""
     response, _ = await record_episode(async_client, sample_episode, headers=None)
     assert response.status_code == 403  # Forbidden (no authentication)
-
 
 
 async def test_episodes_publish_by_episode_id(async_client, admin_headers, recorded_episode_admin):
@@ -85,7 +81,6 @@ async def test_episodes_publish_by_episode_id(async_client, admin_headers, recor
     assert any(ep.id == episode.id and 'global' in ep.published_in for ep in episodes)
 
 
-
 async def test_episodes_publish_not_allowed(
     async_client, standard_user2_headers, recorded_episode_admin
 ):
@@ -100,14 +95,12 @@ async def test_episodes_publish_not_allowed(
     assert pub_response.status_code == 403
 
 
-
 async def test_episodes_publish_nonexistent_episode(async_client, admin_headers):
     """Test publishing a nonexistent episode"""
     response = await publish_episode(
         async_client, episode_id='nonexistent_episode_id', headers=admin_headers
     )
     assert response.status_code == 404
-
 
 
 async def test_episodes_delete_by_episode_id(
@@ -127,7 +120,6 @@ async def test_episodes_delete_by_episode_id(
     assert not any(ep.id == episode.id for ep in episodes)
 
 
-
 async def test_episodes_delete_other_users_episode(
     async_client, recorded_episode_user1, standard_user2_headers
 ):
@@ -142,7 +134,6 @@ async def test_episodes_delete_other_users_episode(
     assert delete_resp.status_code == 403  # Forbidden
 
 
-
 async def test_episodes_delete_guest_user(async_client, recorded_episode_admin):
     """Test deleting episodes as a guest user (unauthorized)"""
     # Get recorded episode from fixture
@@ -151,7 +142,6 @@ async def test_episodes_delete_guest_user(async_client, recorded_episode_admin):
     # Try to delete as guest user
     delete_resp = await delete_episode(async_client, episode_id=episode.id, headers=None)
     assert delete_resp.status_code == 403  # Forbidden (no authentication)
-
 
 
 async def test_episodes_delete_admin_can_delete_any_episode(
@@ -173,7 +163,6 @@ async def test_episodes_delete_admin_can_delete_any_episode(
     assert not any(ep.id == user1_episode.id for ep in episodes)
 
 
-
 async def test_episodes_list(
     async_client, standard_user1_headers, published_episode_admin, recorded_episode_user1
 ):
@@ -188,7 +177,6 @@ async def test_episodes_list(
     assert len(episodes) == 2
     assert episode1.id in [ep.id for ep in episodes]
     assert episode2.id in [ep.id for ep in episodes]
-
 
 
 async def test_episodes_list_with_filter(async_client, admin_headers, recorded_episode_admin):
@@ -206,7 +194,6 @@ async def test_episodes_list_with_filter(async_client, admin_headers, recorded_e
     assert list_response.status_code == 200
     assert len(filtered_episodes) == 1
     assert filtered_episodes[0].id == episode.id
-
 
 
 async def test_episodes_list_with_tuples(async_client, admin_headers, recorded_episode_admin):
@@ -232,7 +219,6 @@ async def test_episodes_list_with_tuples(async_client, admin_headers, recorded_e
     assert 'velocity' in recorded_episode.tuples[0].state
     assert isinstance(recorded_episode.tuples[0].action, int)
     assert isinstance(recorded_episode.tuples[0].reward, float)
-
 
 
 async def test_episodes_list_visibility(
@@ -264,23 +250,29 @@ async def test_episodes_list_visibility(
     assert user1_episode.id not in [ep.id for ep in episodes_user2]
 
 
-
-async def test_episode_publish_in_user_group(async_client, admin_headers, standard_user1_headers, recorded_episode_admin):
+async def test_episode_publish_in_user_group(
+    async_client, admin_headers, standard_user1_headers, recorded_episode_admin
+):
     """Test publishing an episode in a user-created group"""
     # Get recorded episode from fixture
     _, episode = recorded_episode_admin
 
     # Create a group and add user1 to it
     import uuid
+
     group_name = f'test-group-{uuid.uuid4().hex[:8]}'
     group_response = await create_group(async_client, group_name, headers=admin_headers)
     assert group_response.status_code == 200
 
-    add_user_response = await add_user_to_group(async_client, group_name, 'test_user_1', headers=admin_headers)
+    add_user_response = await add_user_to_group(
+        async_client, group_name, 'test_user_1', headers=admin_headers
+    )
     assert add_user_response.status_code == 200
 
     # Publish episode in the user group (should succeed since admin created the episode and group)
-    publish_response = await publish_episode(async_client, episode.id, headers=admin_headers, publish_in=group_name)
+    publish_response = await publish_episode(
+        async_client, episode.id, headers=admin_headers, publish_in=group_name
+    )
     assert publish_response.status_code == 200
 
     # Verify user1 can see the episode
@@ -289,24 +281,30 @@ async def test_episode_publish_in_user_group(async_client, admin_headers, standa
     assert episode.id in [ep.id for ep in episodes]
 
     # Cleanup: delete the created group
-    delete_group_response = await delete_group(async_client, headers=admin_headers, group_name=group_name)
+    delete_group_response = await delete_group(
+        async_client, headers=admin_headers, group_name=group_name
+    )
     assert delete_group_response.status_code == 200
 
 
-
-async def test_episode_publish_in_nonexistent_group(async_client, admin_headers, recorded_episode_admin):
+async def test_episode_publish_in_nonexistent_group(
+    async_client, admin_headers, recorded_episode_admin
+):
     """Test publishing an episode in a non-existent group (should fail)"""
     # Get recorded episode from fixture
     _, episode = recorded_episode_admin
 
     # Try to publish in a non-existent group
-    publish_response = await publish_episode(async_client, episode.id, headers=admin_headers, publish_in='nonexistent-group')
+    publish_response = await publish_episode(
+        async_client, episode.id, headers=admin_headers, publish_in='nonexistent-group'
+    )
     assert publish_response.status_code == 403  # Changed from 404 to 403 based on actual behavior
     assert 'Insufficient permissions' in publish_response.text
 
 
-
-async def test_episode_unpublish_success(async_client, admin_headers, standard_user2_headers, published_episode_admin):
+async def test_episode_unpublish_success(
+    async_client, admin_headers, standard_user2_headers, published_episode_admin
+):
     """Test unpublishing an episode successfully"""
     # Get published episode from fixture
     _, episode = published_episode_admin
@@ -322,14 +320,17 @@ async def test_episode_unpublish_success(async_client, admin_headers, standard_u
     assert episode.id not in [ep.id for ep in episodes]
 
 
-
-async def test_episode_unpublish_insufficient_permissions(async_client, standard_user2_headers, published_episode_admin):
+async def test_episode_unpublish_insufficient_permissions(
+    async_client, standard_user2_headers, published_episode_admin
+):
     """Test unpublishing an episode without sufficient permissions (should fail)"""
     # Get published episode from fixture (owned by admin)
     _, episode = published_episode_admin
 
     # Try to unpublish with user2 (who doesn't have permissions)
-    unpublish_response = await unpublish_episode(async_client, episode.id, headers=standard_user2_headers)
+    unpublish_response = await unpublish_episode(
+        async_client, episode.id, headers=standard_user2_headers
+    )
     assert unpublish_response.status_code == 403
     assert 'Insufficient permissions' in unpublish_response.text
 
