@@ -21,9 +21,10 @@ Or if you're using Poetry:
 poetry add pytupli
 ```
 
-For local development in editable mode,
-navigate to the package directory and run:
+## Development Setup
 
+For local development in editable mode, clone the repository,
+navigate to the package directory and run
 ```{code-block} bash
 poetry install
 ```

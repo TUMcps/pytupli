@@ -18,9 +18,7 @@ By using PyTupli, you can:
 - ✅ Download datasets and convert them into formats compatible with popular offline RL libraries such as d3rlpy
 - ✅ Store and manage artifacts like trained models or time series data
 
-## Getting started
-
-### Installation
+## Installation
 
 You can install PyTupli using pip:
 
@@ -34,7 +32,9 @@ Or if you're using Poetry:
 poetry add pytupli
 ```
 
-For local development in editable mode,
+## Development Setup
+
+For local development in editable mode, clone the repository,
 navigate to the package directory and run
 ```bash
 poetry install
