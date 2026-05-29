@@ -20,7 +20,7 @@ authors:
 affiliations:
   - name: Technical University of Munich, Germany
     index: 1
-date: 10.12.2025
+date: 10 December 2025
 bibliography: paper.bib
 tags:
   - Python
@@ -36,7 +36,7 @@ Offline reinforcement learning (RL) offers a powerful way to derive effective de
 
 # Statement of need
 
-Reinforcement learning (RL) provides powerful methods for decision-making under uncertainty, but training RL agents typically requires extensive interaction with the underlying system or a computationally expensive simulator. Offline RL alleviates this requirement by training agents solely on previously collected data [@lange2012batch]. Such datasets contain tuples of *state, action, next state,* and *reward*, obtained from real systems or simulators.
+Reinforcement learning (RL) provides powerful methods for decision-making under uncertainty, but training RL agents typically requires extensive interaction with the underlying system or a computationally expensive simulator. Offline RL alleviates this requirement by training agents solely on previously collected data [@lange2012batch]. Such datasets contain tuples of state, action, next state, and reward, obtained from real systems or simulators, which we refer to as tuple datasets.
 
 Effectively managing, sharing, and curating these datasets is essential for collaborative offline RL research, yet existing tools provide only partial support. Platforms like Zenodo or the free version of HuggingFace allow users to share finalized datasets but are not suitable for ongoing or private collaborations. Furthermore, they lack mechanisms for tracking dataset structure or performing efficient queries. Traditional databases are better suited but require expertise to design and maintain workflows.
 
@@ -58,13 +58,13 @@ We briefly describe the core functionalities of PyTupli which are illustrated in
 
 **Benchmark and Artifact Management**: PyTupli enables users to store any control task defined as a gymnasium environment. Environments may include parameterizable configurations that produce variations in task dynamics. A fully specified environment is stored as a benchmark, providing a unique reference for reproducible evaluation of controllers. Benchmarks can reference additional data, such as exogenous inputs, time-series data, or pre-trained models. These external units, referred to as artifacts, are stored independently and linked to multiple benchmarks to avoid duplication.
 
-**Data Management**: PyTupli supports ingesting, storing, and querying structured datasets (RL tuples), including their relation to existing benchmark problems and any relevant metadata. MongoDB serves as the backend, providing scalable storage and retrieval. \autoref{tab:times} shows how ingestion and retrieval times scale with dataset size.
+**Data Management**: PyTupli supports ingesting, storing, and querying structured datasets (RL tuples), including their relation to existing benchmark problems and any relevant metadata. MongoDB serves as the backend, providing scalable storage and retrieval. \autoref{tab:times} shows how ingestion and retrieval times scale with dataset size. Since benchmarking was performed against a locally deployed server, network latency is excluded from all reported times and will add to these figures in practice.
 
 **Multi-User Collaboration and Access Control:** PyTupli facilitates collaborative workflows through private, group, and public scopes. Based on their assigned role, users can store, retrieve, delete, and publish objects. A server-side backend with FastAPI provides a REST interface for secure, programmatic access, while token-based authentication ensures secure sharing across teams or organizations.
 
 **Integration with Existing Offline RL Infrastructure:** An interface to the gymnasium framework enables users to record interactions with gymnasium environments as RL tuples. Furthermore, retrieved tuple datasets are made available in a form that can easily be converted into the dataset formats used by existing offline RL libraries such as d3rlpy [@seno2022d3rlpy].
 
-**Assessment of Dataset Quality:** PyTupli provides metrics for coverage and expected returns to guide dataset selection and algorithm choice.
+**Assessment of Dataset Quality:** PyTupli exposes dataset quality metrics through its client API, allowing users to assess dataset suitability without leaving the workflow. These metrics are implemented from the offline RL literature and require no additional setup beyond a retrieved dataset.
 
 
 | Dataset                | Size    | $M$ | $N$  | Upload (s) | Download (s) |
@@ -79,19 +79,19 @@ We briefly describe the core functionalities of PyTupli which are illustrated in
 | ant/expert-v0          | 1.92GB  | 2K  | 2M   | 64.17      | 29.65        |
 | humanoid/expert-v0     | 2.95GB  | 1K  | 999K | 96.61      | 55.32        |
 
-:Upload and download times for established datasets averaged over 10 runs. We chose two examples with low, medium, and high dataset size from the Minari collection. However, not only the size, but also the nature of observations has a strong influence on processing times.\label{tab:times}
+:Upload and download times for established datasets averaged over 10 runs, measured on a consumer laptop with a local server deployment. We chose two examples with low, medium, and high dataset size from the Minari collection, where $M$ denotes the number of episodes and $N$ the total number of tuples. However, not only the size, but also the nature of observations has a strong influence on processing times.\label{tab:times}
 
 # Quality Metrics
 
 ### Return-Based Metrics
-Return-based metrics such as trajectory quality (TQ) [@schweighofer2022dataset] and average Q-value [@asadulaev2025expert] inform algorithm choice. High TQ favors behavioral cloning, while low TQ favors value-based methods. Estimated return improvement [@swazinna2021measuring] relates maximum and average returns. Average Q-value operates on tuple level and is a strong predictor of performance [@asadulaev2025expert]. It requires fitting a Q-function via Bellman updates.
+PyTupli computes trajectory quality (TQ) [@schweighofer2022dataset] and average Q-value [@asadulaev2025expert], which inform algorithm choice for a given dataset. High TQ favors behavioral cloning, while low TQ favors value-based methods. Estimated return improvement [@swazinna2021measuring] relates maximum and average returns. Average Q-value operates at the tuple level and is a strong predictor of performance, requiring a Q-function fitted via Bellman updates.
 
 ### Coverage-Based Metrics
-Dataset quality also depends on state-action coverage, where low coverage reduces performance [@schweighofer2022dataset]. A common approach approximates entropy via unique state-action pairs [@schweighofer2022dataset]. Behavioral entropy [@suttle2025behavioral] extends this idea using density-based weighting of state-action space regions.
+PyTupli also computes state-action coverage metrics, since low coverage is known to reduce offline RL performance [@schweighofer2022dataset]. Supported metrics include an entropy approximation via unique state-action pairs [@schweighofer2022dataset] and behavioral entropy [@suttle2025behavioral], which uses density-based weighting of state-action space regions.
 
 # Software Design
 
-PyTupli is designed around a clear separation between a lightweight client library and a centralized server backend. On the client side, PyTupli integrates via a Gymnasium environment wrapper, which is a well-established abstraction in the RL ecosystem. The server component exposes a REST API that implements functionality specific to offline RL datasets, such as structured storage of benchmarks, episodes, and artifacts, as well as flexible filtering and access control. A centralized service was favored over object storage or git-based workflows because offline RL datasets require domain-specific querying and metadata handling that these approaches do not natively support. Deployment is simplified via a Docker Compose setup, providing a production-ready stack that can be launched with minimal configuration. Here, the API server is hidden behind an Nginx web server acting as a reverse proxy for increased scalability. We chose MongoDB as the backend due to its ability to store heterogeneous, evolving data without rigid schemas while supporting efficient indexing for nested fields. GridFS enables integrated storage of large artifacts, avoiding external dependencies.
+PyTupli is designed around a clear separation between a lightweight client library and a centralized server backend. On the client side, PyTupli integrates via a gymnasium environment wrapper, which is a well-established abstraction in the RL ecosystem. The server component exposes a REST API that implements functionality specific to offline RL datasets, such as structured storage of benchmarks, episodes, and artifacts, as well as flexible filtering and access control. A centralized service was favored over object storage or git-based workflows because offline RL datasets require domain-specific querying and metadata handling that these approaches do not natively support. Deployment is simplified via a Docker Compose setup, providing a production-ready stack that can be launched with minimal configuration. Here, the API server is hidden behind an Nginx web server acting as a reverse proxy for increased scalability. We chose MongoDB as the backend due to its ability to store heterogeneous, evolving data without rigid schemas while supporting efficient indexing for nested fields. GridFS enables integrated storage of large artifacts, avoiding external dependencies.
 
 Existing tools such as Minari focus on distributing pre-existing datasets for offline RL. PyTupli instead targets research groups that need to create, host, and curate custom benchmarks collaboratively. This fundamental difference in scope and architecture made contributing to existing projects impractical, motivating the development of new software tailored to this use case.
 
